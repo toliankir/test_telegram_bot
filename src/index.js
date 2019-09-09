@@ -56,7 +56,11 @@ bot.hears('get', async (ctx) => {
         const user = await dbService.getUserById(ctx.from.id);
         ctx.session.langCode = user[0].id;
     }
-    ctx.reply(newsService.getNewsById(newsService.getLastNewsId(), ctx.session.langCode).title);
+
+    for (const i = newsService.getLastNewsId(); i > newsService.getLastNewsId() - 5; i--) {
+        ctx.reply(newsService.getNewsById(i, ctx.session.langCode).title);
+    }
+    // ctx.reply(newsService.getNewsById(newsService.getLastNewsId(), ctx.session.langCode).title);
 });
 
 bot.on('photo', ({ message, replyWithPhoto }) => {
