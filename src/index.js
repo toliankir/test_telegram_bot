@@ -58,7 +58,7 @@ bot.hears('get', async (ctx) => {
     }
 
     for (let i = newsService.getLastNewsId(); i > newsService.getLastNewsId() - 5; i--) {
-        ctx.reply(newsService.getNewsById(i, ctx.session.langCode).title);
+        await ctx.reply(newsService.getNewsById(i, ctx.session.langCode).title);
     }
     // ctx.reply(newsService.getNewsById(newsService.getLastNewsId(), ctx.session.langCode).title);
 });
