@@ -9,6 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "firebase": "^6.6.0",
+    "querystring": "^0.2.0",
+    "request": "^2.88.0",
     "telegraf": "^3.30.1"
   }
 }
