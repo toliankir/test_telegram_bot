@@ -4,7 +4,7 @@ const querystring = require('querystring');
 const { langCodeToMsgKeys } = require('../helpers/adapters');
 
 class NewsService {
-    constructor(apiUrl = process.env.NEWS_API_URL) {
+    constructor(apiUrl = process.env.NEWS_API_URL ? process.env.NEWS_API_URL : 'https://back.programming.kr.ua/api/news') {
         this.apiUrl = apiUrl;
         this.lastNewsId = 0;
         this.newsData = [];
@@ -13,7 +13,7 @@ class NewsService {
     getNewsById(id, lang) {
         const news = this.newsData.find(el => el.id === id);
         const langKeys = langCodeToMsgKeys(lang);
-        return  {
+        return {
             title: news[langKeys.title],
             text: news[langKeys.text]
         }
