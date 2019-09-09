@@ -12,9 +12,9 @@ const bot = new Telegraf('602060641:AAG0Z5SA5nqUDGrvm---rv6ZSJCGksZm8aM');
 bot.use(session());
 
 const dbService = new DBService();
-dbService.init();
-dbService.getUserById(321375418);
 const newsService = new NewsService();
+
+dbService.init();
 newsService.loadNews();
 
 const testMenu = Telegraf.Extra
@@ -25,15 +25,9 @@ const testMenu = Telegraf.Extra
         m.callbackButton('ENG', 'en')
     ], { columns: 3 }))
 
-
 bot.start((ctx) => {
     ctx.reply('Welcome', testMenu);
 });
-// bot.help((ctx) => ctx.reply('Send me a sticker'));
-// bot.on('sticker', (ctx) => ctx.reply('👍'));
-// bot.hears('test', (ctx) => {
-//     console.log(ctx.update.message);
-// });
 
 bot.action('ru', async (ctx) => {
     dbService.saveUser(fromToUserAdapter(ctx.from, ctx.match));
@@ -60,20 +54,8 @@ bot.hears('get', async (ctx) => {
     for (let i = newsService.getLastNewsId(); i > newsService.getLastNewsId() - 5; i--) {
         await ctx.reply(newsService.getNewsById(i, ctx.session.langCode).title);
     }
-    // ctx.reply(newsService.getNewsById(newsService.getLastNewsId(), ctx.session.langCode).title);
 });
 
-bot.on('photo', ({ message, replyWithPhoto }) => {
-    const fId = message.photo[0].file_id;
-    console.log(fId);
-    test(fId);
-
-    // replyWithPhoto(message.photo.pop().file_id, {caption: 'Your caption here'})
-});
-
-async function test(id) {
-    console.log(await bot.telegram.getFileLink(id));
-}
 
 bot.launch();
 
