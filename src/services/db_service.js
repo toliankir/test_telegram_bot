@@ -22,7 +22,6 @@ class DBService {
     async saveUser(user) {
         const dbUserData = await this.getUserById(user.id);
         if (dbUserData[0]) {
-            console.log(dbUserData);
             this.firestore.collection('users').doc(dbUserData[0].id).set(user)
             .then((data) => {
                 // console.log(data);
@@ -54,27 +53,3 @@ class DBService {
 }
 
 module.exports.DBService = DBService;
-
-
-// const fireApp = firebase.initializeApp(firebaseConfig);
-// const firestore = fireApp.firestore();
-
-// firestore.collection('test').where('name', '==', 'Los Angeles2321').get().then(data => {
-//  data.forEach(el => {
-//     console.log(el.data());
-//  });
-// }).catch(err => console.log(err));
-
-// const test = {
-//     name: 'Los Angeles2321',
-//     state: 'CA',
-//     country: 'USA'
-// }
-
-// firestore.collection('test').add(test)
-// .then((data) => {
-//     // console.log(data);
-//     firestore.disableNetwork();
-//     fireApp.database().goOffline();
-// })
-//     .catch(err => console.log(err));
