@@ -69,15 +69,20 @@ bot.hears(/^get\d+/, async (ctx) => {
         ctx.session.langCode = user[0].data.lang;
     }
     const requestedNewsId = parseInt(ctx.match[0].match(/^get(\d+)/)[1]);
-    // const news = await newsService.getNewsById(requestedNewsId);
-    // console.log(news);
-    // telegrafService.publishNews(requestedNewsId);
     let publishNews = await dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode);
     if (!publishNews[0]) {
-        await telegrafService.publishNews(requestedNewsId);
+        try {
+            await telegrafService.publishNews(requestedNewsId);
+        } catch (err) {
+            ctx.reply(err);
+            return;
+        }
         publishNews = await dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode);
+        if (!publishNews[0]) {
+            ctx.reply(`Error news #${requestedNewsId} loading.`);
+            return;
+        }
     }
-    // const newsLang = getNewsOnLanguage(news, ctx.session.langCode);
     ctx.reply(addTelegrafDomainToNews(publishNews).path);
 });
 

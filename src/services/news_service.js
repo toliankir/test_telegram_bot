@@ -12,7 +12,7 @@ class NewsService {
     async getNewsById(id) {
         return new Promise(async (resolve) => {
             const form = {
-                limit: -(id - this.newsCount)
+                limit: (-(id - this.newsCount) < this.newsCount - 10) ? -(id - this.newsCount) : this.newsCount - 10
             };
             let respJson = {};
             try {

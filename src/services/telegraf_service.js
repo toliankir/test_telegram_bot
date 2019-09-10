@@ -15,7 +15,8 @@ class TelegrafService {
         return new Promise(async (resolve, reject) => {
             const news = await this.newsService.getNewsById(newsId);
             if (!news) {
-                reject('News dont found!');
+                reject(`News #${newsId} don't found!`);
+                return;
             }
             const images = news.images;
 
@@ -47,7 +48,7 @@ class TelegrafService {
 
     async addNews(newsId, language, news, images) {
         return new Promise(resolve => {
-            const dom = new JSDOM(`<img src="https://back.programming.kr.ua/storage/img/news/${images[0]}">` + news.text);
+            const dom = new JSDOM(images && images[0] ? `<img src="https://back.programming.kr.ua/storage/img/news/${images[0]}">` : '' + news.text);
             const content = JSON.stringify(domToNode(dom.window.document.querySelector('*')).children);
             var form = {
                 access_token: this.accountToken,
