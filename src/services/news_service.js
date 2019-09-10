@@ -10,13 +10,16 @@ class NewsService {
         this.newsData = [];
     }
 
-    getNewsById(id, lang) {
-        const news = this.newsData.find(el => el.id === id);
-        const langKeys = langCodeToMsgKeys(lang);
-        return {
-            title: news[langKeys.title],
-            text: news[langKeys.text]
-        }
+    async getNewsById(id, lang) {
+        return new Promise(resolve => {
+            const news = this.newsData.find(el => el.id === id);
+            const langKeys = langCodeToMsgKeys(lang);
+            resolve({
+                title: news[langKeys.title],
+                text: news[langKeys.text]
+            });
+        });
+
     }
 
     getLastNewsId() {
