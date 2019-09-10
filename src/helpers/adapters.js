@@ -3,7 +3,7 @@ function fromToUserAdapter({ id, first_name, last_name, username }, lang = null)
         id,
         first_name,
         last_name,
-        username,
+        username: username ? username : null,
         lang
     }
 }
