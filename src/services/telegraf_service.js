@@ -16,7 +16,8 @@ class TelegrafService {
     async publishNewsWithLang(newsId, language) {
         return new Promise(async (resolve) => {
             const news = await this.newsService.getNewsById(newsId, language);
-            console.log(news.text);
+            const publishedNews = await this.dbService.getNewsByIdAndLang(newsId, language);
+            console.log(publishedNews);
             var form = {
                 access_token: this.accountToken,
                 title: news.title,
@@ -26,30 +27,30 @@ class TelegrafService {
             var formData = querystring.stringify(form);
             var contentLength = formData.length;
 
-            request({
-                headers: {
-                    'Content-Length': contentLength,
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                uri: 'https://api.telegra.ph/createPage',
-                body: formData,
-                method: 'POST'
-            }, (err, res, body) => {
-                if ((err)
-                    || (res.statusCode !== 200)) {
-                    resolve(false);
-                }
-                const jsonData = JSON.parse(body);
-                if (!jsonData.ok) {
-                    resolve(false);
-                }
-                this.dbService.saveNews({
-                    pid: newsId,
-                    path: jsonData.result.path,
-                    lang: language
-                });
-                resolve(true);
-            });
+            // request({
+            //     headers: {
+            //         'Content-Length': contentLength,
+            //         'Content-Type': 'application/x-www-form-urlencoded'
+            //     },
+            //     uri: 'https://api.telegra.ph/createPage',
+            //     body: formData,
+            //     method: 'POST'
+            // }, (err, res, body) => {
+            //     if ((err)
+            //         || (res.statusCode !== 200)) {
+            //         resolve(false);
+            //     }
+            //     const jsonData = JSON.parse(body);
+            //     if (!jsonData.ok) {
+            //         resolve(false);
+            //     }
+            //     this.dbService.saveNews({
+            //         pid: newsId,
+            //         path: jsonData.result.path,
+            //         lang: language
+            //     });
+            //     resolve(true);
+            // });
         });
 
 
