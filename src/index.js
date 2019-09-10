@@ -1,14 +1,11 @@
 const Telegraf = require('telegraf');
 const session = require('telegraf/session');
-// const { Markup } = require('telegraf');
-
 const { fromToUserAdapter } = require('./helpers/adapters');
 const { DBService } = require('./services/db_service');
 const { NewsService } = require('./services/news_service');
 const { TelegrafService } = require('./services/telegraf_service');
-
 const lang = require('../lang/lang.json');
-
+const { addTelegrafDomainToNews, getNewsOnLanguage } = require('./helpers/adapters')
 const bot = new Telegraf('602060641:AAG0Z5SA5nqUDGrvm---rv6ZSJCGksZm8aM');
 bot.use(session());
 
@@ -16,8 +13,7 @@ const dbService = new DBService();
 const newsService = new NewsService();
 
 dbService.init();
-newsService.loadNews();
-
+newsService.initNews();
 const telegrafService = new TelegrafService(dbService, newsService);
 
 const testMenu = Telegraf.Extra
@@ -53,14 +49,34 @@ bot.hears('get', async (ctx) => {
         const user = await dbService.getUserById(ctx.from.id);
         ctx.session.langCode = user[0].data.lang;
     }
-    telegrafService.publishNews(45);
-// console.log(await dbService.getNewsByIdAndLang(45, 'ua'));
+    // ctx.reply(ctx.match);
+    // console.log(await newsService.getNewsById(45, 'ru'));
+    // telegrafService.publishNews(44);
+    // console.log(await dbService.getNewsByIdAndLang(45, 'ua'));
     // dbService.setConfig('test', 'test2');
     // dbService.setConfig('testData', 'data');
 
     // for (let i = newsService.getLastNewsId(); i > newsService.getLastNewsId() - 5; i--) {
     //     await ctx.reply(newsService.getNewsById(i, ctx.session.langCode).title);
     // }
+});
+
+bot.hears(/^get\d+/, async (ctx) => {
+    if (!ctx.session.langCode) {
+        const user = await dbService.getUserById(ctx.from.id);
+        ctx.session.langCode = user[0].data.lang;
+    }
+    const requestedNewsId = parseInt(ctx.match[0].match(/^get(\d+)/)[1]);
+    // const news = await newsService.getNewsById(requestedNewsId);
+    // console.log(news);
+    // telegrafService.publishNews(requestedNewsId);
+    let publishNews = await dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode);
+    if (!publishNews[0]) {
+        await telegrafService.publishNews(requestedNewsId);
+        publishNews = await dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode);
+    }
+    // const newsLang = getNewsOnLanguage(news, ctx.session.langCode);
+    ctx.reply(addTelegrafDomainToNews(publishNews).path);
 });
 
 

@@ -6,34 +6,46 @@ const { langCodeToMsgKeys } = require('../helpers/adapters');
 class NewsService {
     constructor(apiUrl = process.env.NEWS_API_URL ? process.env.NEWS_API_URL : 'https://back.programming.kr.ua/api/news') {
         this.apiUrl = apiUrl;
-        this.lastNewsId = 0;
-        this.newsData = [];
+        this.newsCount = 0;
     }
 
-    async getNewsById(id, lang) {
-        return new Promise(resolve => {
-            const news = this.newsData.find(el => el.id === id);
-            const langKeys = langCodeToMsgKeys(lang);
-            resolve({
-                title: news[langKeys.title],
-                text: news[langKeys.text]
-            });
-        });
-
-    }
-
-    getLastNewsId() {
-        return this.lastNewsId;
-    }
-
-    async loadNews(limit = 0) {
-        return new Promise((resolve, reject) => {
-            var form = {
-                limit
+    async getNewsById(id) {
+        return new Promise(async (resolve) => {
+            const form = {
+                limit: -(id - this.newsCount)
             };
-            var formData = querystring.stringify(form);
-            var contentLength = formData.length;
+            let respJson = {};
+            try {
+                respJson = await this.makeRequest(form);
+            } catch (err) {
+                reject(err);
+            }
+            this.newsCount = respJson.data.newsCount;
+            const news = respJson.data.news.find(el => el.id === id);
+            resolve(news);
+        });
+    }
 
+    async initNews() {
+        return new Promise(async (resolve, reject) => {
+            const form = {
+                limit: 0
+            };
+            let respJson = {};
+            try {
+                respJson = await this.makeRequest(form);
+            } catch (err) {
+                reject(err);
+            }
+            this.newsCount = respJson.data.newsCount;
+            resolve();
+        });
+    }
+
+    async makeRequest(form) {
+        return new Promise((resolve, reject) => {
+            const formData = querystring.stringify(form);
+            const contentLength = formData.length;
             request({
                 headers: {
                     'Content-Length': contentLength,
@@ -43,14 +55,13 @@ class NewsService {
                 body: formData,
                 method: 'POST'
             }, (err, res, body) => {
-                if ((err)
-                    || (res.statusCode !== 200)) {
-                    reject(false);
+                if (err) {
+                    reject(err);
                 }
-                const { data: { news } } = JSON.parse(body);
-                this.lastNewsId = news[0].id > this.lastNewsId ? news[0].id : this.lastNewsId;
-                this.newsData = news;
-                resolve(true);
+                if (res.statusCode !== 200) {
+                    reject(`New init request. Respose Status code:${res.statusCode}`);
+                }
+                resolve(JSON.parse(body));
             });
         });
     }

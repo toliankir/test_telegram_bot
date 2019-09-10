@@ -1,31 +1,58 @@
 const request = require('request');
 const querystring = require('querystring');
 const { JSDOM } = require('jsdom');
+
+const { getNewsOnLanguage } = require('../helpers/adapters');
 class TelegrafService {
     constructor(dbService, newsService) {
         this.dbService = dbService;
         this.newsService = newsService;
         this.accountToken = 'ff74fc07b20e0177efb88b2e35de06b3b4ef79650a24c6db130990f939b9';
+        this.imageDomain = '';
     }
 
-    publishNews(newsId, languages = ['ua', 'ru', 'en']) {
-        for (const language of languages) {
-            this.publishNewsWithLang(newsId, language);
-        }
-    }
+    async publishNews(newsId, languages = ['ua', 'ru', 'en']) {
+        return new Promise(async (resolve, reject) => {
+            const news = await this.newsService.getNewsById(newsId);
+            if (!news) {
+                reject('News dont found!');
+            }
+            const images = news.images;
 
-    async publishNewsWithLang(newsId, language) {
-        return new Promise(async (resolve) => {
-            const news = await this.newsService.getNewsById(newsId, language);
+            for (const language of languages) {
+                const newsOnLang = getNewsOnLanguage(news, language);
+                await this.publishNewsWithLang(newsId, language, newsOnLang, images);
+            }
+            resolve();
+        });
+
+    }
+    async publishNewsWithLang(newsId, language, news, images) {
+        return new Promise(async (resolve, reject) => {
             const publishedNews = await this.dbService.getNewsByIdAndLang(newsId, language);
-            console.log(publishedNews);
-            const dom = new JSDOM(news.text);
-            const domFragment = dom.window.document.querySelector('*');
+            if (publishedNews[0]) {
+                resolve();
+            }
+            await this.addNews(newsId, language, news, images);
+            resolve();
+            // if () {
+            //     resolve();
+            //     return;
+            // }
+            // reject(`Can not publish news: ${newsId} ${language} - ${news.title}`);
+        });
+    }
 
+
+
+    async addNews(newsId, language, news, images) {
+        return new Promise(resolve => {
+            const dom = new JSDOM(`<img src="https://back.programming.kr.ua/storage/img/news/${images[0]}">` + news.text);
+            const content = JSON.stringify(domToNode(dom.window.document.querySelector('*')).children);
             var form = {
                 access_token: this.accountToken,
                 title: news.title,
-                content: JSON.stringify(domToNode(domFragment).children),
+                content,
                 return_content: true
             };
             var formData = querystring.stringify(form);
@@ -39,7 +66,7 @@ class TelegrafService {
                 uri: 'https://api.telegra.ph/createPage',
                 body: formData,
                 method: 'POST'
-            }, (err, res, body) => {
+            }, async (err, res, body) => {
                 if ((err)
                     || (res.statusCode !== 200)) {
                     resolve(false);
@@ -49,18 +76,18 @@ class TelegrafService {
                     resolve(false);
                 }
                 this.dbService.saveNews({
-                    pid: newsId,
+                    id: newsId,
                     path: jsonData.result.path,
                     lang: language
                 });
                 resolve(true);
             });
         });
-
-
     }
 
+    updateNews() {
 
+    }
 }
 
 module.exports.TelegrafService = TelegrafService;

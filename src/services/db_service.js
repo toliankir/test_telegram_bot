@@ -37,43 +37,6 @@ class DBService {
             .catch(err => console.log(err));
     }
 
-    async saveNews({ pid, lang, path }) {
-        const publishedNews = await this.getNewsByIdAndLang(pid, lang);
-        if (publishedNews[0]) {
-            this.firestore.collection('news').doc(publishedNews[0].id).update({ path }).then(data => {
-            }).catch(err => console.log(err));
-            return;
-        }
-        this.firestore.collection('news').add({
-            pid,
-            lang,
-            path
-        }).then(data => {
-        }).catch(err => console.log(err));
-    }
-
-    async getNewsByIdAndLang(newsPId, lang = null) {
-        return new Promise(resolve => {
-            let query = this.firestore.collection('news').where('pid', '==', newsPId);
-            if (lang) {
-                query = query.where('lang', '==', lang);
-            }
-            query.get().then(data => {
-                const news = [];
-                data.forEach(el => {
-                    const { pid, lang, path } = el.data();
-                    news.push({
-                        pid,
-                        lang,
-                        path,
-                        id: el.id
-                    });
-                });
-                resolve(news);
-            }).catch(err => console.log(err));
-        });
-    }
-
     async getUserById(id) {
         return new Promise((resolve, reject) => {
             this.firestore.collection('users').where('id', '==', id).get().then(data => {
@@ -88,6 +51,47 @@ class DBService {
             });
         }).catch(err => console.log(err));
     }
+
+    async saveNews({ id, lang, path }) {
+        return new Promise(async (resolve, reject) => {
+            const publishedNews = await this.getNewsByIdAndLang(id, lang);
+            if (publishedNews[0]) {
+                this.firestore.collection('news').doc(publishedNews[0].id).update({ path }).then(data => {
+                }).catch(err => console.log(err));
+                return;
+            }
+            this.firestore.collection('news').add({
+                id,
+                lang,
+                path
+            })
+                .then(() => resolve())
+                .catch(err => reject(err));
+        });
+    }
+
+    async getNewsByIdAndLang(newsId, lang = null) {
+        return new Promise(resolve => {
+            let query = this.firestore.collection('news').where('id', '==', newsId);
+            if (lang) {
+                query = query.where('lang', '==', lang);
+            }
+            query.get().then(data => {
+                const news = [];
+                data.forEach(el => {
+                    const { id, lang, path } = el.data();
+                    news.push({
+                        id,
+                        lang,
+                        path,
+                        uid: el.id
+                    });
+                });
+                resolve(news);
+            }).catch(err => console.log(err));
+        });
+    }
+
 
     async getConfig() {
         return new Promise(resolve => {

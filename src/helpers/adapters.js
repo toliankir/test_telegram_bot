@@ -33,5 +33,25 @@ function langCodeToMsgKeys(lang) {
     }
 }
 
+function getNewsOnLanguage(news, lang) {
+    const keys = langCodeToMsgKeys(lang);
+    return {
+        title: news[keys.title],
+        text: news[keys.text]
+    }
+}
+
+function addTelegrafDomainToNews(publishedNews) {
+    return {
+        path: 'https://telegra.ph/' + publishedNews[0].path,
+        id: publishedNews[0].id,
+        lang: publishedNews[0].lang,
+        pid: publishedNews[0].pid
+    }
+
+}
+
 module.exports.fromToUserAdapter = fromToUserAdapter;
 module.exports.langCodeToMsgKeys = langCodeToMsgKeys;
+module.exports.addTelegrafDomainToNews = addTelegrafDomainToNews;
+module.exports.getNewsOnLanguage = getNewsOnLanguage;
