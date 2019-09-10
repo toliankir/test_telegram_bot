@@ -36,11 +36,6 @@ class TelegrafService {
             }
             await this.addNews(newsId, language, news, images);
             resolve();
-            // if () {
-            //     resolve();
-            //     return;
-            // }
-            // reject(`Can not publish news: ${newsId} ${language} - ${news.title}`);
         });
     }
 
@@ -48,7 +43,15 @@ class TelegrafService {
 
     async addNews(newsId, language, news, images) {
         return new Promise(resolve => {
-            const dom = new JSDOM(images && images[0] ? `<img src="https://back.programming.kr.ua/storage/img/news/${images[0]}">` : '' + news.text);
+            //images && images[0] ? `<img src="https://back.programming.kr.ua/storage/img/news/${images[0]}">` : ''
+            let imagesStr = '';
+            if (images) {
+                imagesStr = images.reduce((accumulator, currentValue) => {
+                    return accumulator + `<img src="https://back.programming.kr.ua/storage/img/news/${currentValue}">`;
+                }, imagesStr);
+            }
+            console.log(imagesStr);
+            const dom = new JSDOM(imagesStr + news.text);
             const content = JSON.stringify(domToNode(dom.window.document.querySelector('*')).children);
             var form = {
                 access_token: this.accountToken,
