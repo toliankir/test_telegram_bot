@@ -50,7 +50,6 @@ class TelegrafService {
                     return accumulator + `<img src="https://back.programming.kr.ua/storage/img/news/${currentValue}">`;
                 }, imagesStr);
             }
-            console.log(imagesStr);
             const dom = new JSDOM(imagesStr + news.text);
             const content = JSON.stringify(domToNode(dom.window.document.querySelector('*')).children);
             var form = {
