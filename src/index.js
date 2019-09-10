@@ -6,7 +6,9 @@ const { NewsService } = require('./services/news_service');
 const { TelegrafService } = require('./services/telegraf_service');
 const lang = require('../lang/lang.json');
 const { addTelegrafDomainToNews, getNewsOnLanguage } = require('./helpers/adapters')
-const bot = new Telegraf('602060641:AAG0Z5SA5nqUDGrvm---rv6ZSJCGksZm8aM');
+// const bot = new Telegraf('602060641:AAG0Z5SA5nqUDGrvm---rv6ZSJCGksZm8aM');
+const bot = new Telegraf('729034691:AAG9dTyKIrqKSIYewg853iG4J1tGLIj5P3Q');
+
 bot.use(session());
 
 const dbService = new DBService();
