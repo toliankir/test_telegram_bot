@@ -36,20 +36,11 @@ class BotService {
     }
 
     addActionHandlers() {
-        this.bot.action('ru', async (ctx) => {
-            this.dbService.saveUser(fromToUserAdapter(ctx.from, ctx.match));
-            ctx.session.langCode = ctx.match;
-            ctx.editMessageText(lang.welcome_msg[ctx.match]);
-        });
-        this.bot.action('ua', async (ctx) => {
-            this.dbService.saveUser(fromToUserAdapter(ctx.from, ctx.match));
-            ctx.session.langCode = ctx.match;
-            ctx.editMessageText(lang.welcome_msg[ctx.match]);
-        });
-        this.bot.action('en', async (ctx) => {
-            this.dbService.saveUser(fromToUserAdapter(ctx.from, ctx.match));
-            ctx.session.langCode = ctx.match;
-            ctx.editMessageText(lang.welcome_msg[ctx.match]);
+        this.bot.action(/^(ru|ua|en)$/, async (ctx) => {
+            const language = ctx.match[0];
+            this.dbService.saveUser(fromToUserAdapter(ctx.from, language));
+            ctx.session.langCode = language;
+            ctx.editMessageText(lang.welcome_msg[language]);
         });
     }
 
