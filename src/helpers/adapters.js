@@ -1,9 +1,9 @@
-function fromToUserAdapter({ id, first_name, last_name, username }, lang = null) {
+function fromToUserAdapter({ id, first_name = null, last_name = null, username = null }, lang = 'ru') {
     return {
         id,
         first_name,
         last_name,
-        username: username ? username : null,
+        username,
         lang
     }
 }

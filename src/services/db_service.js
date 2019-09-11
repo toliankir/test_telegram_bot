@@ -21,29 +21,21 @@ class DBService {
     }
 
     async saveUser(user) {
-        const dbUserData = await this.getUserById(user.id);
-        if (dbUserData[0]) {
-            this.firestore.collection('users').doc(dbUserData[0].id).set(user)
-                .then(data => {
-                    // console.log(data);
-                })
-                .catch(err => console.log(err));
+        const [dbUserData, ...users] = await this.getUserById(user.id);
+        if (dbUserData) {
+            await this.firestore.collection('users').doc(dbUserData.uid).set(user);
             return;
         }
-        this.firestore.collection('users').add(user)
-            .then((data) => {
-                // console.log(data);
-            })
-            .catch(err => console.log(err));
+        await this.firestore.collection('users').add(user);
     }
 
-    async getUserById(id) {
+    async getUserById(userTelegramId) {
         return new Promise((resolve, reject) => {
-            this.firestore.collection('users').where('id', '==', id).get().then(data => {
+            this.firestore.collection('users').where('id', '==', userTelegramId).get().then(data => {
                 const user = [];
                 data.forEach(el => {
                     user.push({
-                        id: el.id,
+                        uid: el.id,
                         data: el.data()
                     });
                 });
