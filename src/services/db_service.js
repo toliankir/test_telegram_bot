@@ -21,7 +21,7 @@ class DBService {
     }
 
     async saveUser(user) {
-        const [dbUserData, ...users] = await this.getUserById(user.id);
+        const [dbUserData] = await this.getUserById(user.id);
         if (dbUserData) {
             await this.firestore.collection('users').doc(dbUserData.uid).set(user);
             return;
