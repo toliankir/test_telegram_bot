@@ -28,7 +28,7 @@ class TelegrafService {
         });
 
     }
-    async publishNewsWithLang(newsId, language, news, images) {
+    async refreshNewsArchiveLang(newsId, language, news, images) {
         return new Promise(async (resolve) => {
             const publishedNews = await this.dbService.getNewsByIdAndLang(newsId, language);
             if (publishedNews[0]) {

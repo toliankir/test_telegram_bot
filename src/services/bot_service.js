@@ -58,6 +58,9 @@ class BotService {
                 console.log(el.data());
             })
         });
+        this.bot.command('test', (ctx) => {
+            
+        });
     }
 
     launch() {
