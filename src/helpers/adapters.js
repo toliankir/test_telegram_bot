@@ -37,7 +37,8 @@ function getNewsOnLanguage(news, lang) {
     const keys = langCodeToMsgKeys(lang);
     return {
         title: news[keys.title],
-        text: news[keys.text]
+        text: news[keys.text],
+        data: news.date
     }
 }
 

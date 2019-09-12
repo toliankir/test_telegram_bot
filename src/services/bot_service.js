@@ -52,8 +52,11 @@ class BotService {
     }
 
     addCommandHandlers() {
-        this.bot.command('archive', ctx => {
-            this.dbService.getNewsForArchive(ctx.session.langCode);
+        this.bot.command('archive', async (ctx) => {
+            const newsQueryObj = await this.dbService.getAllNewsByLangQuery(ctx.session.langCode);
+            newsQueryObj.forEach(el => {
+                console.log(el.data());
+            })
         });
     }
 

@@ -43,23 +43,25 @@ class TelegrafService {
 
     async addNews(newsId, language, news, images) {
         return new Promise(resolve => {
-            //images && images[0] ? `<img src="https://back.programming.kr.ua/storage/img/news/${images[0]}">` : ''
             let imagesStr = '';
-            if (images) {
-                imagesStr = images.reduce((accumulator, currentValue) => {
-                    return accumulator + `<img src="https://back.programming.kr.ua/storage/img/news/${currentValue}">`;
-                }, imagesStr);
+            let htmlStr = news.text;
+            if (images && images[0]) {
+                htmlStr = `<img src="https://back.programming.kr.ua/storage/img/news/${images[0]}">` + htmlStr;
+
+                for (let imageIndex = 1; imageIndex < images.length; imageIndex++) {
+                    htmlStr += `<img src="https://back.programming.kr.ua/storage/img/news/${images[imageIndex]}">`;
+                }
             }
-            const dom = new JSDOM(imagesStr + news.text);
-            const content = JSON.stringify(domToNode(dom.window.document.querySelector('*')).children);
-            var form = {
+
+            const form = {
                 access_token: this.accountToken,
                 title: news.title,
-                content,
+                content: htmlStrToNode(htmlStr),
                 return_content: true
             };
-            var formData = querystring.stringify(form);
-            var contentLength = formData.length;
+
+            const formData = querystring.stringify(form);
+            const contentLength = formData.length;
 
             request({
                 headers: {
@@ -94,6 +96,11 @@ class TelegrafService {
 }
 
 module.exports.TelegrafService = TelegrafService;
+
+function htmlStrToNode(htmlStr) {
+    const dom = new JSDOM(htmlStr);
+    return JSON.stringify(domToNode(dom.window.document.querySelector('*')).children);
+}
 
 function domToNode(domNode) {
     if (domNode.nodeType == domNode.TEXT_NODE) {
