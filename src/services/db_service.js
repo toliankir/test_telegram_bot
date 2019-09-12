@@ -44,7 +44,7 @@ class DBService {
         }).catch(err => console.log(err));
     }
 
-    async saveNews({ id, lang, path }) {
+    async saveNews({ id, lang, path, news: {title, date} }) {
         return new Promise(async (resolve, reject) => {
             const publishedNews = await this.getNewsByIdAndLang(id, lang);
             if (publishedNews[0]) {
@@ -52,10 +52,13 @@ class DBService {
                 }).catch(err => console.log(err));
                 return;
             }
+            
             this.firestore.collection('news').add({
                 id,
                 lang,
-                path
+                path,
+                title,
+                date
             })
                 .then(() => resolve())
                 .catch(err => reject(err));

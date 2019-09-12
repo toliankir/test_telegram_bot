@@ -38,7 +38,7 @@ function getNewsOnLanguage(news, lang) {
     return {
         title: news[keys.title],
         text: news[keys.text],
-        data: news.date
+        date: news.date
     }
 }
 

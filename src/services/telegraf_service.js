@@ -29,7 +29,7 @@ class TelegrafService {
 
     }
     async publishNewsWithLang(newsId, language, news, images) {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             const publishedNews = await this.dbService.getNewsByIdAndLang(newsId, language);
             if (publishedNews[0]) {
                 resolve();
@@ -43,7 +43,6 @@ class TelegrafService {
 
     async addNews(newsId, language, news, images) {
         return new Promise(resolve => {
-            let imagesStr = '';
             let htmlStr = news.text;
             if (images && images[0]) {
                 htmlStr = `<img src="https://back.programming.kr.ua/storage/img/news/${images[0]}">` + htmlStr;
@@ -83,7 +82,8 @@ class TelegrafService {
                 this.dbService.saveNews({
                     id: newsId,
                     path: jsonData.result.path,
-                    lang: language
+                    lang: language,
+                    news
                 });
                 resolve(true);
             });
