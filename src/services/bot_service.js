@@ -12,10 +12,6 @@ class BotService {
 
     addMessaageHandlers() {
         this.bot.hears(/^get\d+/, async (ctx) => {
-            if (!ctx.session.langCode) {
-                const user = await this.dbService.getUserById(ctx.from.id);
-                ctx.session.langCode = user[0].data.lang;
-            }
             const requestedNewsId = parseInt(ctx.match[0].match(/^get(\d+)/)[1]);
             let publishNews = await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode);
             if (!publishNews[0]) {
@@ -46,6 +42,19 @@ class BotService {
 
     addMiddelwares() {
         this.bot.use(session());
+        this.bot.use(async (ctx, next) => {
+            if (!ctx.session.langCode) {
+                const user = await this.dbService.getUserById(ctx.from.id);
+                ctx.session.langCode = user[0].data.lang;
+            }
+            next();
+        });
+    }
+
+    addCommandHandlers() {
+        this.bot.command('archive', ctx => {
+            this.dbService.getNewsForArchive(ctx.session.langCode);
+        });
     }
 
     launch() {
@@ -54,8 +63,8 @@ class BotService {
         this.addMiddelwares();
         this.addActionHandlers();
         this.addMessaageHandlers();
+        this.addCommandHandlers();
 
-        this.bot.command('archive', ctx => ctx.reply('archive'));
         this.bot.start((ctx) => {
             ctx.reply('Welcome', testMenu);
             this.dbService.saveUser(fromToUserAdapter(ctx.from));

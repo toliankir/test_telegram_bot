@@ -105,6 +105,18 @@ class DBService {
             });
         });
     }
+
+    async getNewsForArchive(language = null) {
+        let query = this.firestore.collection('news');
+        if (language) {
+            query = query.where('lang', '==', language);
+        }
+        query.get().then(data => {
+            data.forEach(el => {
+                console.log(el.data());
+            });
+        });
+    }
 }
 
 module.exports.DBService = DBService;
