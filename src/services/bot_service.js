@@ -55,6 +55,7 @@ class BotService {
         this.addActionHandlers();
         this.addMessaageHandlers();
 
+        this.bot.command('archive', ctx => ctx.reply('archive'));
         this.bot.start((ctx) => {
             ctx.reply('Welcome', testMenu);
             this.dbService.saveUser(fromToUserAdapter(ctx.from));
