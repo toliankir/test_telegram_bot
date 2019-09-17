@@ -81,7 +81,7 @@ class TelegrafService {
     }
 
     async addNews(newsId, language, news, images) {
-        return new Promise(async (resolve) => {
+        return new Promise(async (resolve, reject) => {
             let htmlStr = news.text;
             if (images && images[0]) {
                 htmlStr = `<img src="${process.env.news_api_imageDomainPrefix}${images[0]}">` + htmlStr;
@@ -89,8 +89,13 @@ class TelegrafService {
                     htmlStr += `<img src="${process.env.news_api_imageDomainPrefix}${images[imageIndex]}">`;
                 }
             }
-
-            const path = await this.createPage(news.title, htmlStr);
+            let path;
+            try {
+                path = await this.createPage(news.title, htmlStr);
+            } catch (err) {
+                reject(err);
+                return;
+            }    
 
             await this.dbService.saveNews({
                 id: newsId,

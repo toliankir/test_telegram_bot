@@ -23,6 +23,7 @@ class BotService {
                     publishNews = await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode);
                 } catch (err) {
                     ctx.reply(err);
+                    return;
                 }
             }
             ctx.reply(addTelegrafDomainToNews(publishNews[0]).path);
