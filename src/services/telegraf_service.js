@@ -1,14 +1,15 @@
+require("dotenv").config();
 const request = require('request');
 const querystring = require('querystring');
 const { JSDOM } = require('jsdom');
+const lang = require('../../lang/lang.json');
 
-const { getNewsOnLanguage } = require('../helpers/adapters');
+const { getNewsOnLanguage, addTelegrafDomainToNews } = require('../helpers/adapters');
 class TelegrafService {
     constructor(dbService, newsService) {
         this.dbService = dbService;
         this.newsService = newsService;
         this.accountToken = process.env.telegraf_accountToken;
-        this.imageDomain = process.env.telegraf_imageDomain;
     }
 
     async publishNews(newsId, languages = ['ua', 'ru', 'en']) {
@@ -43,19 +44,11 @@ class TelegrafService {
         });
     }
 
-    async addNews(newsId, language, news, images) {
+    async createPage(title, htmlStr) {
         return new Promise((resolve, reject) => {
-            let htmlStr = news.text;
-            if (images && images[0]) {
-                htmlStr = `<img src="${this.imageDomain}${images[0]}">` + htmlStr;
-                for (let imageIndex = 1; imageIndex < images.length; imageIndex++) {
-                    htmlStr += `<img src="${this.imageDomain}${images[imageIndex]}">`;
-                }
-            }
-
             const form = {
                 access_token: this.accountToken,
-                title: news.title,
+                title: title,
                 content: htmlStrToNode(htmlStr),
                 return_content: true
             };
@@ -82,14 +75,51 @@ class TelegrafService {
                     reject(`Telegraf error: ${jsonData.error}`);
                     return;
                 }
-                await this.dbService.saveNews({
-                    id: newsId,
-                    path: jsonData.result.path,
-                    lang: language,
-                    news
-                });
-                resolve();
+                resolve(jsonData.result.path);
             });
+        });
+    }
+
+    async addNews(newsId, language, news, images) {
+        return new Promise(async (resolve) => {
+            let htmlStr = news.text;
+            if (images && images[0]) {
+                htmlStr = `<img src="${process.env.news_api_imageDomainPrefix}${images[0]}">` + htmlStr;
+                for (let imageIndex = 1; imageIndex < images.length; imageIndex++) {
+                    htmlStr += `<img src="${process.env.news_api_imageDomainPrefix}${images[imageIndex]}">`;
+                }
+            }
+
+            const path = await this.createPage(news.title, htmlStr);
+
+            await this.dbService.saveNews({
+                id: newsId,
+                path,
+                lang: language,
+                news
+            });
+            resolve();
+        });
+    }
+
+    updateArchive() {
+        return Promise(async (resolve) => {
+            const news = {
+                'ru': '<ul>',
+                'ua': '<ul>',
+                'en': '<ul>'
+            };
+            (await this.dbService.getAllNewsByLangQuery()).forEach(el => {
+                const data = addTelegrafDomainToNews(el.data());
+                news[data.lang] += `<li><a href="${data.path}">${data.title} (${data.date})</a></li>`;
+            });
+
+            for (const langKey in news) {
+                news[langKey] += '</ul>';
+                const pagePath = await this.createPage(lang.arhive_title[langKey], news[langKey]);
+                await this.dbService.setConfig(`archive_${langKey}`, pagePath);
+            }
+            resolve();
         });
     }
 

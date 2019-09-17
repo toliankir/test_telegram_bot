@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 function fromToUserAdapter({ id, first_name = null, last_name = null, username = null }, lang = 'ru') {
     return {
         id,
@@ -41,17 +43,17 @@ function getNewsOnLanguage(news, lang) {
         date: news.date
     }
 }
+function addTelegrafDomain(link) {
+    return process.env.telegraf_domainPrefix + link;
+}
 
 function addTelegrafDomainToNews(publishedNews) {
-    return {
-        path: 'https://telegra.ph/' + publishedNews[0].path,
-        id: publishedNews[0].id,
-        lang: publishedNews[0].lang,
-        pid: publishedNews[0].pid
-    }
+    publishedNews.path = addTelegrafDomain(publishedNews.path);
+    return publishedNews;
 }
 
 module.exports.fromToUserAdapter = fromToUserAdapter;
 module.exports.langCodeToMsgKeys = langCodeToMsgKeys;
 module.exports.addTelegrafDomainToNews = addTelegrafDomainToNews;
 module.exports.getNewsOnLanguage = getNewsOnLanguage;
+module.exports.addTelegrafDomain = addTelegrafDomain;

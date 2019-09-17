@@ -1,13 +1,15 @@
 const Telegraf = require('telegraf');
 const session = require('telegraf/session');
-const { fromToUserAdapter, addTelegrafDomainToNews } = require('../helpers/adapters');
+const { addTelegrafDomain, fromToUserAdapter, addTelegrafDomainToNews } = require('../helpers/adapters');
 const lang = require('../../lang/lang.json');
 class BotService {
 
-    constructor(token, dbService, telegrafService) {
-        this.token = token;
+    constructor(dbService, telegrafService, newsService) {
+        this.token = process.env.telegram_accountToken;
         this.dbService = dbService;
         this.telegrafService = telegrafService;
+        this.newsService = newsService;
+        this.newsSyncDelay = 0;
     }
 
     addMessaageHandlers() {
@@ -22,7 +24,7 @@ class BotService {
                     ctx.reply(err);
                 }
             }
-            ctx.reply(addTelegrafDomainToNews(publishNews).path);
+            ctx.reply(addTelegrafDomainToNews(publishNews[0]).path);
         });
     }
 
@@ -47,30 +49,48 @@ class BotService {
     }
 
     addCommandHandlers() {
-        this.bot.command('archive', async (ctx) => {
-            const newsQueryObj = await this.dbService.getAllNewsByLangQuery(ctx.session.langCode);
-            newsQueryObj.forEach(el => {
-                const data = el.data();
-                console.log(data.id, data.title);
-            })
+   
+        this.bot.command('sync', async (ctx) => {
+            const replayCtx = await ctx.reply('Start news sync');
+            const newsCount = this.newsService.getNewsCount();
+            this.syncOneNews(ctx, replayCtx, 1, newsCount);
         });
-        this.bot.command('test', async (ctx) => {
 
-            for (let requestedNewsId = 0; requestedNewsId <= 45; requestedNewsId++) {
-                console.log(requestedNewsId);
-                let publishNews = await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode);
-                if (!publishNews[0]) {
-                    try {
-                        await this.telegrafService.publishNews(requestedNewsId);
-                        ctx.reply(`News ${requestedNewsId} added.`);
-                    } catch (err) {
-                        ctx.reply(err);
-                    }
+        this.bot.command('build_archive', async (ctx) => {
+            await this.telegrafService.updateArchive();
+            ctx.reply('New archive created.');
+        });
+
+        this.bot.command('archive', async (ctx) => {
+            const archivePath = await this.dbService.getConfig(`archive_${ctx.session.langCode}`);
+            ctx.reply(addTelegrafDomain(archivePath));
+        });
+    }
+
+
+    syncOneNews(ctx, replayCtx, newsId, newsCount) {
+        setTimeout(async () => {
+            this.newsSyncDelay = 0;
+            let publishNews = await this.dbService.getNewsByIdAndLang(newsId, ctx.session.langCode);
+            if (!publishNews[0]) {
+                this.newsSyncDelay = process.env.telegraf_syncDelay;
+                try {
+                    await this.telegrafService.publishNews(newsId);
+                    publishNews = await this.dbService.getNewsByIdAndLang(newsId, ctx.session.langCode);
+                } catch (err) {
+                    ctx.reply(err);
+                    this.newsSyncDelay = 0;
+                    return;
                 }
-
             }
 
-        });
+            ctx.telegram.editMessageText(replayCtx.chat.id, replayCtx.message_id, null, `Start news sync.
+    Completed: ${Math.round((100 / newsCount) * newsId)}%
+    Added news #: ${newsId} - ${publishNews[0].title}`);
+            if (newsId < newsCount) {
+                this.syncOneNews(ctx, replayCtx, newsId + 1, newsCount);
+            }
+        }, this.newsSyncDelay);
     }
 
     launch() {
@@ -90,6 +110,7 @@ class BotService {
 }
 
 module.exports.BotService = BotService;
+
 const testMenu = Telegraf.Extra
     .markdown()
     .markup((m) => m.inlineKeyboard([

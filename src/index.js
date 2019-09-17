@@ -3,7 +3,7 @@ const { NewsService } = require('./services/news_service');
 const { TelegrafService } = require('./services/telegraf_service');
 const { BotService } = require('./services/bot_service');
 
-const telegramToken = process.env.telegram_accountToken // test bot
+// const telegramToken = process.env.telegram_accountToken // test bot
 // const telegramToken = '729034691:AAG9dTyKIrqKSIYewg853iG4J1tGLIj5P3Q'; //public bot
 
 serviceStart();
@@ -16,6 +16,6 @@ async function serviceStart() {
      newsService.initNews();
 
     const telegrafService = new TelegrafService(dbService, newsService);
-    const botService = new BotService(telegramToken, dbService, telegrafService);
+    const botService = new BotService(dbService, telegrafService, newsService);
     botService.launch();
 }

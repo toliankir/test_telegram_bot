@@ -44,7 +44,7 @@ class DBService {
         }).catch(err => console.log(err));
     }
 
-    async saveNews({ id, lang, path, news: {title, date} }) {
+    async saveNews({ id, lang, path, news: { title, date } }) {
         return new Promise(async (resolve, reject) => {
             const publishedNews = await this.getNewsByIdAndLang(id, lang);
             if (publishedNews[0]) {
@@ -52,7 +52,7 @@ class DBService {
                 }).catch(err => console.log(err));
                 return;
             }
-            
+
             this.firestore.collection('news').add({
                 id,
                 lang,
@@ -74,9 +74,11 @@ class DBService {
             query.get().then(data => {
                 const news = [];
                 data.forEach(el => {
-                    const { id, lang, path } = el.data();
+                    const { id, lang, path, title, date } = el.data();
                     news.push({
                         id,
+                        title,
+                        date,
                         lang,
                         path,
                         uid: el.id
@@ -88,13 +90,15 @@ class DBService {
     }
 
 
-    async getConfig() {
+    async getConfig(key) {
         return new Promise(resolve => {
             this.firestore.collection('config').doc(this.configDoc).get().then(doc => {
-                if (!doc.exists) {
+                const data = doc.data();
+                if (!doc.exists || !data[key]) {
                     resolve(false);
+                    return;
                 }
-                resolve(doc.data());
+                resolve(data[key]);
             })
         });
     }
@@ -104,17 +108,14 @@ class DBService {
             this.firestore.collection('config').doc(this.configDoc).update({ [key]: value }).then(data => {
                 resolve(data);
             }).catch(err => {
-                resolve(false);
+                reject(false);
             });
         });
     }
 
-    getAllNewsByLangQuery(language = null) {
+    getAllNewsByLangQuery() {
         return new Promise(resolve => {
-            let query = this.firestore.collection('news');
-            if (language) {
-                query = query.where('lang', '==', language);
-            }
+            let query = this.firestore.collection('news').orderBy('date', 'desc');
             query.get().then(data => {
                 resolve(data);
             });
