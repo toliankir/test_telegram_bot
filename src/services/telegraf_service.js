@@ -8,7 +8,7 @@ class TelegrafService {
         this.dbService = dbService;
         this.newsService = newsService;
         this.accountToken = process.env.telegraf_accountToken;
-        this.imageDomain = process.env.imageDomain;
+        this.imageDomain = process.env.telegraf_imageDomain;
     }
 
     async publishNews(newsId, languages = ['ua', 'ru', 'en']) {
@@ -22,7 +22,11 @@ class TelegrafService {
 
             for (const language of languages) {
                 const newsOnLang = getNewsOnLanguage(news, language);
-                await this.publishNewsWithLang(newsId, language, newsOnLang, images);
+                try {
+                    await this.publishNewsWithLang(newsId, language, newsOnLang, images);
+                } catch (err) {
+                    reject(err);
+                }
             }
             resolve();
         });
@@ -30,19 +34,20 @@ class TelegrafService {
     }
     async publishNewsWithLang(newsId, language, news, images) {
         return new Promise(async (resolve, reject) => {
-            await this.addNews(newsId, language, news, images).catch(err => reject(`Can't add news #${newsId} to firestore`));
+            try {
+                await this.addNews(newsId, language, news, images);
+            } catch (err) {
+                reject(err);
+            }
             resolve();
         });
     }
 
-
-
     async addNews(newsId, language, news, images) {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             let htmlStr = news.text;
             if (images && images[0]) {
                 htmlStr = `<img src="${this.imageDomain}${images[0]}">` + htmlStr;
-
                 for (let imageIndex = 1; imageIndex < images.length; imageIndex++) {
                     htmlStr += `<img src="${this.imageDomain}${images[imageIndex]}">`;
                 }
@@ -69,19 +74,21 @@ class TelegrafService {
             }, async (err, res, body) => {
                 if ((err)
                     || (res.statusCode !== 200)) {
-                    resolve(false);
+                    reject(`Request error. Status code: ${res.statusCode}`);
+                    return;
                 }
                 const jsonData = JSON.parse(body);
                 if (!jsonData.ok) {
-                    resolve(false);
+                    reject(`Telegraf error: ${jsonData.error}`);
+                    return;
                 }
-                this.dbService.saveNews({
+                await this.dbService.saveNews({
                     id: newsId,
                     path: jsonData.result.path,
                     lang: language,
                     news
                 });
-                resolve(true);
+                resolve();
             });
         });
     }

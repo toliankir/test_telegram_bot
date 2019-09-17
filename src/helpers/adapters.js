@@ -49,7 +49,6 @@ function addTelegrafDomainToNews(publishedNews) {
         lang: publishedNews[0].lang,
         pid: publishedNews[0].pid
     }
-
 }
 
 module.exports.fromToUserAdapter = fromToUserAdapter;

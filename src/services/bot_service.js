@@ -17,9 +17,9 @@ class BotService {
             if (!publishNews[0]) {
                 try {
                     await this.telegrafService.publishNews(requestedNewsId);
+                    publishNews = await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode);
                 } catch (err) {
                     ctx.reply(err);
-                    return;
                 }
             }
             ctx.reply(addTelegrafDomainToNews(publishNews).path);
@@ -50,11 +50,26 @@ class BotService {
         this.bot.command('archive', async (ctx) => {
             const newsQueryObj = await this.dbService.getAllNewsByLangQuery(ctx.session.langCode);
             newsQueryObj.forEach(el => {
-                console.log(el.data());
+                const data = el.data();
+                console.log(data.id, data.title);
             })
         });
-        this.bot.command('test', (ctx) => {
-            
+        this.bot.command('test', async (ctx) => {
+
+            for (let requestedNewsId = 0; requestedNewsId <= 45; requestedNewsId++) {
+                console.log(requestedNewsId);
+                let publishNews = await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode);
+                if (!publishNews[0]) {
+                    try {
+                        await this.telegrafService.publishNews(requestedNewsId);
+                        ctx.reply(`News ${requestedNewsId} added.`);
+                    } catch (err) {
+                        ctx.reply(err);
+                    }
+                }
+
+            }
+
         });
     }
 
