@@ -1,4 +1,5 @@
 const Telegraf = require('telegraf');
+const Extra = require('telegraf/extra')
 const session = require('telegraf/session');
 const { addTelegrafDomain, fromToUserAdapter, addTelegrafDomainToNews } = require('../helpers/adapters');
 const lang = require('../../lang/lang.json');
@@ -49,7 +50,7 @@ class BotService {
     }
 
     addCommandHandlers() {
-   
+
         this.bot.command('sync', async (ctx) => {
             const replayCtx = await ctx.reply('Start news sync');
             const newsCount = this.newsService.getNewsCount();
@@ -101,8 +102,9 @@ class BotService {
         this.addMessaageHandlers();
         this.addCommandHandlers();
 
-        this.bot.start((ctx) => {
+        this.bot.start(async (ctx) => {
             ctx.reply('Welcome', testMenu);
+
             this.dbService.saveUser(fromToUserAdapter(ctx.from));
         });
         this.bot.launch();
