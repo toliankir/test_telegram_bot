@@ -7,8 +7,8 @@ class TelegrafService {
     constructor(dbService, newsService) {
         this.dbService = dbService;
         this.newsService = newsService;
-        this.accountToken = 'ff74fc07b20e0177efb88b2e35de06b3b4ef79650a24c6db130990f939b9';
-        this.imageDomain = '';
+        this.accountToken = process.env.telegraf_accountToken;
+        this.imageDomain = process.env.imageDomain;
     }
 
     async publishNews(newsId, languages = ['ua', 'ru', 'en']) {
@@ -28,13 +28,9 @@ class TelegrafService {
         });
 
     }
-    async refreshNewsArchiveLang(newsId, language, news, images) {
-        return new Promise(async (resolve) => {
-            const publishedNews = await this.dbService.getNewsByIdAndLang(newsId, language);
-            if (publishedNews[0]) {
-                resolve();
-            }
-            await this.addNews(newsId, language, news, images);
+    async publishNewsWithLang(newsId, language, news, images) {
+        return new Promise(async (resolve, reject) => {
+            await this.addNews(newsId, language, news, images).catch(err => reject(`Can't add news #${newsId} to firestore`));
             resolve();
         });
     }
@@ -45,10 +41,10 @@ class TelegrafService {
         return new Promise(resolve => {
             let htmlStr = news.text;
             if (images && images[0]) {
-                htmlStr = `<img src="https://back.programming.kr.ua/storage/img/news/${images[0]}">` + htmlStr;
+                htmlStr = `<img src="${this.imageDomain}${images[0]}">` + htmlStr;
 
                 for (let imageIndex = 1; imageIndex < images.length; imageIndex++) {
-                    htmlStr += `<img src="https://back.programming.kr.ua/storage/img/news/${images[imageIndex]}">`;
+                    htmlStr += `<img src="${this.imageDomain}${images[imageIndex]}">`;
                 }
             }
 

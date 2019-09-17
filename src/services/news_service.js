@@ -4,8 +4,8 @@ const querystring = require('querystring');
 const { langCodeToMsgKeys } = require('../helpers/adapters');
 
 class NewsService {
-    constructor(apiUrl = process.env.NEWS_API_URL ? process.env.NEWS_API_URL : 'https://back.programming.kr.ua/api/news') {
-        this.apiUrl = apiUrl;
+    constructor() {
+        this.apiUrl = process.env.news_api_url;
         this.newsCount = 0;
     }
 

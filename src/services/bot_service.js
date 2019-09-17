@@ -21,11 +21,6 @@ class BotService {
                     ctx.reply(err);
                     return;
                 }
-                publishNews = await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode);
-                if (!publishNews[0]) {
-                    ctx.reply(`Error news #${requestedNewsId} loading.`);
-                    return;
-                }
             }
             ctx.reply(addTelegrafDomainToNews(publishNews).path);
         });
@@ -75,11 +70,8 @@ class BotService {
             ctx.reply('Welcome', testMenu);
             this.dbService.saveUser(fromToUserAdapter(ctx.from));
         });
-
         this.bot.launch();
     }
-
-
 }
 
 module.exports.BotService = BotService;

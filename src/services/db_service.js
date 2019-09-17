@@ -1,18 +1,18 @@
 const firebase = require('firebase');
 require('firebase/firestore');
-
+require("dotenv").config();
 class DBService {
     constructor() {
         this.firebaseConfig = {
-            apiKey: "AIzaSyCoi0zOKFonfbVI1Ij7dz3WZPQ-vG44kmQ",
-            authDomain: "telegram-bot-shpp.firebaseapp.com",
-            databaseURL: "https://telegram-bot-shpp.firebaseio.com",
-            projectId: "telegram-bot-shpp",
-            storageBucket: "",
-            messagingSenderId: "600708026957",
-            appId: "1:600708026957:web:a0f99d8f70524f5d708204"
+            apiKey: process.env.fb_apiKey,
+            authDomain: process.env.fb_authDomain,
+            databaseURL: process.env.fb_databaseURL,
+            projectId: process.env.fb_projectId,
+            storageBucket: process.env.fb_storageBucket,
+            messagingSenderId: process.env.fb_messagingSenderId,
+            appId: process.env.fb_appId
         };
-        this.configDoc = 'CDT9Wj3hq4kMD2gEkZPr';
+        this.configDoc = process.env.fb_config_key;
     }
 
     init() {
