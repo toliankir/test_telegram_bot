@@ -95,7 +95,7 @@ class TelegrafService {
             } catch (err) {
                 reject(err);
                 return;
-            }    
+            }
 
             await this.dbService.saveNews({
                 id: newsId,
@@ -107,8 +107,8 @@ class TelegrafService {
         });
     }
 
-    updateArchive() {
-        return Promise(async (resolve) => {
+    async  updateArchive() {
+        return new Promise(async (resolve) => {
             const news = {
                 'ru': '<ul>',
                 'ua': '<ul>',
