@@ -107,8 +107,9 @@ class TelegrafService {
         });
     }
 
-    async  updateArchive() {
+    async updateArchive() {
         return new Promise(async (resolve) => {
+            await this.newsService.initNews();
             const news = {
                 'ru': '<ul>',
                 'ua': '<ul>',
