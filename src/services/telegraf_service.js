@@ -4,7 +4,7 @@ const querystring = require('querystring');
 const { JSDOM } = require('jsdom');
 const lang = require('../../lang/lang.json');
 
-const { getNewsOnLanguage, addTelegrafDomainToNews } = require('../helpers/adapters');
+const { getNewsOnLanguage, addTelegrafDomainToNews, addTelegrafDomain } = require('../helpers/adapters');
 class TelegrafService {
     constructor(dbService, newsService) {
         this.dbService = dbService;
@@ -44,15 +44,27 @@ class TelegrafService {
         });
     }
 
+    async getPage(path) {
+        return new Promise((resolve, reject) => {
+            request({ url: `https://api.telegra.ph/getPage/${path}`, qs: { return_content: true } }, (err, res, body) => {
+                if ((err)
+                    || (res.statusCode !== 200)) {
+                    reject(`Request error. Status code: ${res.statusCode}`);
+                    return;
+                }
+                resolve(JSON.parse(body));
+            });
+        })
+    }
+
     async createPage(title, htmlStr) {
         return new Promise((resolve, reject) => {
             const form = {
                 access_token: this.accountToken,
                 title: title,
-                content: htmlStrToNode(htmlStr),
+                content: JSON.stringify(htmlStrToNode(htmlStr)),
                 return_content: true
             };
-
             const formData = querystring.stringify(form);
             const contentLength = formData.length;
 
@@ -80,6 +92,33 @@ class TelegrafService {
         });
     }
 
+    async addPrevLinksToNews(id, lang) {
+        return new Promise(async (resolve) => {
+            const currentNews = (await this.dbService.getNewsByIdAndLang(id, lang))[0];
+            const currentArticle = await this.getPage(currentNews.path);
+            const prevLinksStr = await this.getPrevLinksStr(id, lang)
+            const linksNodes = htmlStrToNode(prevLinksStr);
+            const newContent = [...currentArticle.result.content, ...linksNodes];
+
+            await this.updateNews(currentNews.path, currentNews.title, newContent)
+            resolve();
+        });
+    }
+
+    async getPrevLinksStr(id, lang) {
+        return new Promise(async (resolve) => {
+            const prevNews = await this.dbService.getPrevNews(id, lang);
+
+            let linksStr = '<div><ul>';
+            for (const news of prevNews) {
+                linksStr += `<li><a href="${addTelegrafDomain(news.path)}">${news.title}</a></li>`
+            }
+            linksStr += '</ul></div';
+
+            resolve(linksStr);
+        });
+    }
+
     async addNews(newsId, language, news, images) {
         return new Promise(async (resolve, reject) => {
             let htmlStr = news.text;
@@ -90,6 +129,7 @@ class TelegrafService {
                 }
             }
             let path;
+            htmlStr += await this.getPrevLinksStr(newsId, language);
             try {
                 path = await this.createPage(news.title, htmlStr);
             } catch (err) {
@@ -129,8 +169,40 @@ class TelegrafService {
         });
     }
 
-    updateNews() {
+    async updateNews(path, title, content) {
+        return new Promise((resolve, reject) => {
+            const form = {
+                access_token: this.accountToken,
+                title: title,
+                content: JSON.stringify(content),
+                return_content: true
+            };
 
+            const formData = querystring.stringify(form);
+            const contentLength = formData.length;
+
+            request({
+                headers: {
+                    'Content-Length': contentLength,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                uri: `https://api.telegra.ph/editPage/${path}`,
+                body: formData,
+                method: 'POST'
+            }, async (err, res, body) => {
+                if ((err)
+                    || (res.statusCode !== 200)) {
+                    reject(`Request error. Status code: ${res.statusCode}`);
+                    return;
+                }
+                const jsonData = JSON.parse(body);
+                if (!jsonData.ok) {
+                    reject(`Telegraf error: ${jsonData.error}`);
+                    return;
+                }
+                resolve(jsonData.result.path);
+            });
+        });
     }
 }
 
@@ -138,7 +210,7 @@ module.exports.TelegrafService = TelegrafService;
 
 function htmlStrToNode(htmlStr) {
     const dom = new JSDOM(htmlStr);
-    return JSON.stringify(domToNode(dom.window.document.querySelector('*')).children);
+    return domToNode(dom.window.document.querySelector('body')).children;
 }
 
 function domToNode(domNode) {

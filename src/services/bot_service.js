@@ -4,7 +4,7 @@ const { addTelegrafDomain, fromToUserAdapter, addTelegrafDomainToNews } = requir
 const lang = require('../../lang/lang.json');
 const Stage = require('telegraf/stage');
 const WizardScene = require('telegraf/scenes/wizard');
-const Markup = require('telegraf/markup')
+const Markup = require('telegraf/markup');
 
 
 class BotService {
@@ -20,6 +20,7 @@ class BotService {
 
     addMessaageHandlers() {
         this.bot.hears(/^get\d+/, async (ctx) => {
+
             const requestedNewsId = parseInt(ctx.match[0].match(/^get(\d+)/)[1]);
             let publishNews = await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode);
             if (!publishNews[0]) {
@@ -41,11 +42,14 @@ class BotService {
         });
 
 
-        this.bot.hears('test', async (ctx) => {
-            // ctx.telegram.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
-            ctx.reply('321');
-            // console.log(ctx.stage);
-            this.stage.enter('start');
+        this.bot.hears(/^addLinks\d+$/, async (ctx) => {
+            const requestedNewsId = parseInt(ctx.match[0].match(/^addLinks(\d+)/)[1]);
+            this.telegrafService.addPrevLinksToNews(requestedNewsId, ctx.session.langCode);
+
+        });
+
+        this.bot.hears(/^links\d$/, async (ctx) => {
+            console.log(ctx);
         });
 
     }
