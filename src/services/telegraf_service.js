@@ -36,6 +36,7 @@ class TelegrafService {
     async publishNewsWithLang(newsId, language, news, images) {
         return new Promise(async (resolve, reject) => {
             try {
+                console.log(newsId, language);
                 await this.addNews(newsId, language, news, images);
             } catch (err) {
                 reject(err);
@@ -109,11 +110,11 @@ class TelegrafService {
         return new Promise(async (resolve) => {
             const prevNews = await this.dbService.getPrevNews(id, lang);
 
-            let linksStr = '<div><ul>';
+            let linksStr = '<br><ul>';
             for (const news of prevNews) {
-                linksStr += `<li><a href="${addTelegrafDomain(news.path)}">${news.title}</a></li>`
+                linksStr += `<li><a href="${addTelegrafDomain(news.path)}">${news.title} (${news.date})</a></li>`
             }
-            linksStr += '</ul></div';
+            linksStr += '</ul>';
 
             resolve(linksStr);
         });
@@ -130,8 +131,17 @@ class TelegrafService {
             }
             let path;
             htmlStr += await this.getPrevLinksStr(newsId, language);
+            const title = `${news.title} (${news.date})`;
+            const newsFromDB = (await this.dbService.getNewsByIdAndLang(newsId, language))[0];
+
+            if (newsFromDB && newsFromDB.path) {
+                this.updateNews(newsFromDB.path, title, htmlStrToNode(htmlStr));
+                resolve();
+                return;
+            }
+
             try {
-                path = await this.createPage(news.title, htmlStr);
+                path = await this.createPage(title, htmlStr);
             } catch (err) {
                 reject(err);
                 return;

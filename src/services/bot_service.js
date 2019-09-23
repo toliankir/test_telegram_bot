@@ -22,17 +22,17 @@ class BotService {
         this.bot.hears(/^get\d+/, async (ctx) => {
 
             const requestedNewsId = parseInt(ctx.match[0].match(/^get(\d+)/)[1]);
-            let publishNews = await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode);
-            if (!publishNews[0]) {
+            let publishNews = (await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode))[0];
+            if (!publishNews) {
                 try {
                     await this.telegrafService.publishNews(requestedNewsId);
-                    publishNews = await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode);
+                    publishNews = (await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode))[0];
                 } catch (err) {
                     ctx.reply(err);
                     return;
                 }
             }
-            ctx.reply(addTelegrafDomainToNews(publishNews[0]).path);
+            ctx.reply(addTelegrafDomainToNews(publishNews).path);
         });
 
         this.bot.hears('Archive', async (ctx) => {
@@ -48,8 +48,8 @@ class BotService {
 
         });
 
-        this.bot.hears(/^links\d$/, async (ctx) => {
-            console.log(ctx);
+        this.bot.hears('test', async (ctx) => {
+            console.log(ctx.session.langCode);
         });
 
     }
