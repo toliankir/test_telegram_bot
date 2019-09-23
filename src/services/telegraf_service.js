@@ -36,7 +36,6 @@ class TelegrafService {
     async publishNewsWithLang(newsId, language, news, images) {
         return new Promise(async (resolve, reject) => {
             try {
-                console.log(newsId, language);
                 await this.addNews(newsId, language, news, images);
             } catch (err) {
                 reject(err);

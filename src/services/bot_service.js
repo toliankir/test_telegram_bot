@@ -153,7 +153,6 @@ class BotService {
         this.stage.register(startScene);
 
         this.bot.start(async (ctx) => {
-            // console.log(ctx.scene);
             ctx.scene.enter('start');
         });
         this.bot.launch();
