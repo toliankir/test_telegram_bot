@@ -16,6 +16,30 @@ class BotService {
         this.newsService = newsService;
         this.newsSyncDelay = 0;
         this.stage;
+
+        this.startScene = new WizardScene(
+            'start',
+            async (ctx) => {
+                ctx.reply(`Select language`, Markup.keyboard([
+                    ['ru', 'ua', 'en']
+                ])
+                    .oneTime()
+                    .resize()
+                    .extra());
+                ctx.wizard.next();
+            },
+            (ctx) => {
+                this.dbService.saveUser(fromToUserAdapter(ctx.from, ctx.message.text));
+                ctx.session.langCode = ctx.message.text;
+                ctx.telegram.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
+                ctx.reply(lang.welcome_msg[ctx.message.text], Markup.keyboard([
+                    ['Archive', 'Select language']
+                ])
+                    .resize()
+                    .extra());
+                ctx.scene.leave();
+            }
+        );
     }
 
     addMessaageHandlers() {
@@ -35,6 +59,14 @@ class BotService {
             const archivePath = await this.dbService.getConfig(`archive_${ctx.session.langCode}`);
             ctx.reply(addTelegrafDomain(archivePath));
         });
+
+        this.bot.hears('Select language', async (ctx) => {
+            ctx.telegram.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
+            ctx.scene.enter('start');
+            // const archivePath = await this.dbService.getConfig(`archive_${ctx.session.langCode}`);
+            // ctx.reply(addTelegrafDomain(archivePath));
+        });
+        
     }
 
     addActionHandlers() {
@@ -127,39 +159,14 @@ class BotService {
     launch() {
         this.bot = new Telegraf(this.token);
 
-        const startScene = new WizardScene(
-            'start',
-            async (ctx) => {
-                ctx.reply(`Select language`, Markup.keyboard([
-                    ['ru', 'ua', 'en']
-                ])
-                    .oneTime()
-                    .resize()
-                    .extra());
-                ctx.wizard.next();
-            },
-            (ctx) => {
-                this.dbService.saveUser(fromToUserAdapter(ctx.from, ctx.message.text));
-                ctx.session.langCode = ctx.message.text;
-                ctx.telegram.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
-                ctx.reply(lang.welcome_msg[ctx.message.text], Markup.keyboard([
-                    ['Archive', 'Select language']
-                ])
-                    .resize()
-                    .extra());
-                ctx.scene.leave();
-            }
-        )
-
         this.addMiddelwares();
         this.addActionHandlers();
         this.addMessaageHandlers();
         this.addCommandHandlers();
 
-
         this.stage = new Stage();
         this.bot.use(this.stage.middleware());
-        this.stage.register(startScene);
+        this.stage.register(this.startScene);
 
         this.bot.start(async (ctx) => {
             ctx.scene.enter('start');
@@ -169,3 +176,5 @@ class BotService {
 }
 
 module.exports.BotService = BotService;
+
+
