@@ -144,6 +144,7 @@ class TelegrafService {
         if (nextLinksStr) {
             linksStr += `<h4>${lang.next_links_title[language]}</h4>${nextLinksStr}`;
         }
+        linksStr += `<ul><li><a href=${addTelegrafDomain(await this.dbService.getConfig(`archive_${language}`))}>${lang.arhive_title[language]}</a></li></ul>`;
         return htmlStrToNode(linksStr);
     }
 

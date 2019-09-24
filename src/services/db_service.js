@@ -1,6 +1,7 @@
 const firebase = require('firebase');
 require('firebase/firestore');
 require("dotenv").config();
+const { logger } = require('../services/logger');
 class DBService {
     constructor() {
         this.firebaseConfig = {
@@ -15,9 +16,25 @@ class DBService {
         this.configDoc = process.env.fb_config_key;
     }
 
-    init() {
+    async init() {
         this.fireApp = firebase.initializeApp(this.firebaseConfig);
+        await this.auth();
+
         this.firestore = this.fireApp.firestore();
+    }
+
+    async auth() {
+        return new Promise((resolve, reject) => {
+            firebase.auth().signInWithEmailAndPassword(process.env.fb_auth_email, process.env.fb_auth_password).then(() => {
+                logger.log({
+                    level: 'info',
+                    message: `Login to firebase as ${process.env.fb_auth_email}`
+                });
+                resolve();
+            }).catch(err => {
+                reject(`${err.code}: ${err.message}`)
+            });
+        });
     }
 
     async saveUser(user) {
