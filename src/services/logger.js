@@ -1,18 +1,20 @@
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, printf } = format;
 
-const myFormat = printf(({ level, message, timestamp }) => {
-    return `${timestamp.replace('T', ' ').replace(/(\.\d+Z)$/, '')} ${level}: ${message}`;
-});
+
 
 const logger = createLogger({
-    level: 'info',
-    format: combine(
-        timestamp(),
-        myFormat
-    ),
     transports: [
-        new transports.Console()
+        new transports.Console({
+            level: 'info',
+            format: combine(
+                timestamp(),
+                format.printf(({ level, message, timestamp }) => {
+                    return `${timestamp.replace('T', ' ').replace(/(\.\d+Z)$/, '')} ${level}: ${message}`;
+                }),
+                format.colorize({ all: true })
+            )
+        })
     ]
 });
 
