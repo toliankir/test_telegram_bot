@@ -24,13 +24,8 @@ class BotService {
             const requestedNewsId = parseInt(ctx.match[0].match(/^get(\d+)/)[1]);
             let publishNews = (await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode))[0];
             if (!publishNews) {
-                try {
-                    await this.telegrafService.publishNews(requestedNewsId);
-                    publishNews = (await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode))[0];
-                } catch (err) {
-                    ctx.reply(err);
-                    return;
-                }
+                ctx.reply('Can not find news in database.');
+                return;
             }
             ctx.reply(addTelegrafDomainToNews(publishNews).path);
         });
@@ -39,22 +34,6 @@ class BotService {
             ctx.telegram.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
             const archivePath = await this.dbService.getConfig(`archive_${ctx.session.langCode}`);
             ctx.reply(addTelegrafDomain(archivePath));
-        });
-
-
-        this.bot.hears(/^addLinks\d+$/, async (ctx) => {
-            const requestedNewsId = parseInt(ctx.match[0].match(/^addLinks(\d+)/)[1]);
-            this.telegrafService.addPrevLinksToNews(requestedNewsId, ctx.session.langCode);
-        });
-
-        this.bot.hears('test', async (ctx) => {
-            for (let i = 1; i <= 45; i++) {
-                await this.telegrafService.addAllLinksToNews(i);
-                console.log(i);
-            }
-        });
-
-        this.bot.hears('test2', async (ctx) => {
         });
     }
 
@@ -75,13 +54,39 @@ class BotService {
 
     addCommandHandlers() {
         this.bot.command('sync', async (ctx) => {
-            const replayCtx = await ctx.reply('Start news sync');
-            await this.newsService.initNews();
+            this.newsService.initNews();
+            const { message_id: msgId, chat: { id: chatId } } = await ctx.reply('Start news sync by update existing with add missing news.');
             const newsCount = this.newsService.getNewsCount();
-            this.syncNews(ctx, replayCtx, 1, newsCount);
+            for (let sourceNewsIndex = 1; sourceNewsIndex <= newsCount; sourceNewsIndex++) {
+                await this.telegrafService.syncNews(sourceNewsIndex, true);
+                ctx.telegram.editMessageText(chatId, msgId, null, `Start news sync by update existing with add missing news.
+                Completed: ${sourceNewsIndex}/${newsCount}`);
+            }
         });
 
-        this.bot.command('build_archive', async (ctx) => {
+        this.bot.command('syncByUpdate', async (ctx) => {
+            this.newsService.initNews();
+            const { message_id: msgId, chat: { id: chatId } } = await ctx.reply('Start news sync by update existing.');
+            const newsCount = this.newsService.getNewsCount();
+            for (let sourceNewsIndex = 1; sourceNewsIndex <= newsCount; sourceNewsIndex++) {
+                await this.telegrafService.syncNews(sourceNewsIndex);
+                ctx.telegram.editMessageText(chatId, msgId, null, `Start news sync by update existing.
+                Completed: ${sourceNewsIndex}/${newsCount}`);
+            }
+        });
+
+        this.bot.command('addLinks', async (ctx) => {
+            this.newsService.initNews();
+            const { message_id: msgId, chat: { id: chatId } } = await ctx.reply('Start add links to news.');
+            const newsCount = this.newsService.getNewsCount();
+            for (let sourceNewsIndex = 1; sourceNewsIndex <= newsCount; sourceNewsIndex++) {
+                await this.telegrafService.addAllLinksToNews(sourceNewsIndex);
+                ctx.telegram.editMessageText(chatId, msgId, null, `Start news sync by update.
+                Completed: ${sourceNewsIndex}/${newsCount}`);
+            }
+        });
+
+        this.bot.command('buildArchive', async (ctx) => {
             await this.telegrafService.updateArchive();
             ctx.reply('New archive created.');
         });

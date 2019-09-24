@@ -5,6 +5,7 @@ const { JSDOM } = require('jsdom');
 const lang = require('../../lang/lang.json');
 
 const { getNewsOnLanguage, addTelegrafDomainToNews, addTelegrafDomain } = require('../helpers/adapters');
+
 class TelegrafService {
     constructor(dbService, newsService) {
         this.dbService = dbService;
@@ -12,35 +13,26 @@ class TelegrafService {
         this.accountToken = process.env.telegraf_accountToken;
     }
 
-    async publishNews(newsId, languages = ['ua', 'ru', 'en']) {
-        return new Promise(async (resolve, reject) => {
-            const news = await this.newsService.getNewsById(newsId);
-            if (!news) {
-                reject(`News #${newsId} don't found!`);
-                return;
-            }
-            const images = news.images;
-
-            for (const language of languages) {
-                const newsOnLang = getNewsOnLanguage(news, language);
-                try {
-                    await this.publishNewsWithLang(newsId, language, newsOnLang, images);
-                } catch (err) {
-                    reject(err);
+    async syncNews(newsId, forceAdd = false, languageArr = ['ua', 'ru', 'en']) {
+        return new Promise(async (resolve) => {
+            const sourceNews = await this.newsService.getNewsById(newsId);
+            const newsFromDb = await this.dbService.getNewsByIdAndLang(newsId);
+            for (const language of languageArr) {
+                const newsDbOnLang = newsFromDb.find((el) => el.lang === language);
+                const sourceOnLang = getNewsOnLanguage(sourceNews, language);
+                sourceOnLang.title = getNewsTitle(sourceOnLang);
+                sourceOnLang.text = addImagesToNewsContent(sourceOnLang.text, sourceNews.images);
+                if (newsDbOnLang) {
+                    await this.updagePage(newsDbOnLang.path, sourceOnLang.title, htmlStrToNode(sourceOnLang.text));
+                    continue;
+                }
+                if (!newsDbOnLang && forceAdd) {
+                    await this.addNews(newsId, sourceOnLang, language);
                 }
             }
-            resolve();
-        });
-
-    }
-    async publishNewsWithLang(newsId, language, news, images) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.addNews(newsId, language, news, images);
-            } catch (err) {
-                reject(err);
-            }
-            resolve();
+            setTimeout(() => {
+                resolve();
+            }, process.env.telegraf_syncDelay);
         });
     }
 
@@ -71,12 +63,12 @@ class TelegrafService {
         }
     }
 
-    async createPage(title, htmlStr) {
+    async createPage(title, content) {
         return new Promise((resolve, reject) => {
             const form = {
                 access_token: this.accountToken,
                 title: title,
-                content: JSON.stringify(htmlStrToNode(htmlStr)),
+                content: JSON.stringify(content),
                 return_content: true
             };
             const formData = querystring.stringify(form);
@@ -110,11 +102,11 @@ class TelegrafService {
         return new Promise(async (resolve) => {
             for (const language of languageArr) {
                 const newsFromDb = (await this.dbService.getNewsByIdAndLang(id, language))[0];
-                let links = [];
+
                 const news = await this.getPage(newsFromDb.path);
                 this.removeEndTags(news, ['ul', 'br', 'h4']);
-                links = await this.getAllLinksNodes(newsFromDb.id, newsFromDb.lang);
-                await this.updateNews(news.result.path, news.result.title, [...news.result.content, ...links]);
+                const links = await this.getAllLinksNodes(newsFromDb.id, newsFromDb.lang);
+                await this.updagePage(news.result.path, news.result.title, [...news.result.content, ...links]);
             }
             resolve();
         });
@@ -155,39 +147,10 @@ class TelegrafService {
         return htmlStrToNode(linksStr);
     }
 
-    async addNews(newsId, language, news, images) {
-        return new Promise(async (resolve, reject) => {
-            let htmlStr = news.text;
-            if (images && images[0]) {
-                htmlStr = `<img src="${process.env.news_api_imageDomainPrefix}${images[0]}">` + htmlStr;
-                for (let imageIndex = 1; imageIndex < images.length; imageIndex++) {
-                    htmlStr += `<img src="${process.env.news_api_imageDomainPrefix}${images[imageIndex]}">`;
-                }
-            }
-            let path;
-            htmlStr += await this.getPrevLinksStr(newsId, language);
-            const title = `${news.title} (${news.date})`;
-            const newsFromDB = (await this.dbService.getNewsByIdAndLang(newsId, language))[0];
-
-            if (newsFromDB && newsFromDB.path) {
-                this.updateNews(newsFromDB.path, title, htmlStrToNode(htmlStr));
-                resolve();
-                return;
-            }
-
-            try {
-                path = await this.createPage(title, htmlStr);
-            } catch (err) {
-                reject(err);
-                return;
-            }
-
-            await this.dbService.saveNews({
-                id: newsId,
-                path,
-                lang: language,
-                news
-            });
+    async addNews(newsId, sourceNews, language) {
+        return new Promise(async (resolve) => {
+            const path = await this.createPage(sourceNews.title, htmlStrToNode(sourceNews.text));
+            await this.dbService.saveNews(newsId, sourceNews, language, path);
             resolve();
         });
     }
@@ -207,20 +170,20 @@ class TelegrafService {
 
             for (const langKey in news) {
                 news[langKey] += '</ul>';
-                const pagePath = await this.createPage(lang.arhive_title[langKey], news[langKey]);
+                const pagePath = await this.createPage(lang.arhive_title[langKey], htmlStrToNode(news[langKey]));
                 await this.dbService.setConfig(`archive_${langKey}`, pagePath);
             }
             resolve();
         });
     }
 
-    async updateNews(path, title, content) {
+    async updagePage(path, title, content) {
         return new Promise((resolve, reject) => {
             const form = {
                 access_token: this.accountToken,
                 title: title,
                 content: JSON.stringify(content),
-                return_content: true
+                return_content: false
             };
 
             const formData = querystring.stringify(form);
@@ -286,4 +249,19 @@ function domToNode(domNode) {
         }
     }
     return nodeElement;
+}
+
+function addImagesToNewsContent(content, imagesArr) {
+    let result = content;
+    if (imagesArr && imagesArr[0]) {
+        result = `<img src="${process.env.news_api_imageDomainPrefix}${imagesArr[0]}">` + result;
+        for (let imageIndex = 1; imageIndex < imagesArr.length; imageIndex++) {
+            result += `<img src="${process.env.news_api_imageDomainPrefix}${imagesArr[imageIndex]}">`;
+        }
+    }
+    return result;
+}
+
+function getNewsTitle(newsSource) {
+    return `${newsSource.title} (${newsSource.date})`;
 }

@@ -30,7 +30,7 @@ class DBService {
     }
 
     async getUserById(userTelegramId) {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.firestore.collection('users').where('id', '==', userTelegramId).get().then(data => {
                 const user = [];
                 data.forEach(el => {
@@ -44,21 +44,14 @@ class DBService {
         }).catch(err => console.log(err));
     }
 
-    async saveNews({ id, lang, path, news: { title, date } }) {
+    async saveNews(id, sourceNews, lang, path) {
         return new Promise(async (resolve, reject) => {
-            const publishedNews = await this.getNewsByIdAndLang(id, lang);
-            if (publishedNews[0]) {
-                this.firestore.collection('news').doc(publishedNews[0].id).update({ path }).then(data => {
-                }).catch(err => console.log(err));
-                return;
-            }
-
             this.firestore.collection('news').add({
                 id,
                 lang,
                 path,
-                title,
-                date
+                title: sourceNews.title,
+                date: sourceNews.date
             })
                 .then(() => resolve())
                 .catch(err => reject(err));
