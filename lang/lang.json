@@ -8,5 +8,15 @@
         "ua": "Архів новин",
         "ru": "Архив новостей",
         "en": "News archive"
+    },
+    "prev_links_title": {
+        "ua": "Попереднi новини",
+        "ru": "Предыдущие новости",
+        "en": "Preview news"
+    },
+    "next_links_title": {
+        "ua": "Наступнi новини",
+        "ru": "Следующие новости",
+        "en": "Next news"
     }
 }

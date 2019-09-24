@@ -46,15 +46,29 @@ class TelegrafService {
 
     async getPage(path) {
         return new Promise((resolve, reject) => {
-            request({ url: `https://api.telegra.ph/getPage/${path}`, qs: { return_content: true } }, (err, res, body) => {
-                if ((err)
-                    || (res.statusCode !== 200)) {
+            request({ url: encodeURI(`https://api.telegra.ph/getPage/${path}`), qs: { return_content: true } }, (err, res, body) => {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+                if (res.statusCode !== 200) {
                     reject(`Request error. Status code: ${res.statusCode}`);
                     return;
                 }
                 resolve(JSON.parse(body));
             });
         })
+    }
+
+    haveEndTags(news, tagsArr) {
+        const endTag = news.result.content[news.result.content.length - 1].tag
+        return tagsArr.indexOf(endTag) !== -1;
+    }
+
+    removeEndTags(news, tagsArr) {
+        while (this.haveEndTags(news, tagsArr)) {
+            news.result.content.pop();
+        }
     }
 
     async createPage(title, htmlStr) {
@@ -92,15 +106,16 @@ class TelegrafService {
         });
     }
 
-    async addPrevLinksToNews(id, lang) {
+    async addAllLinksToNews(id, languageArr = ['ru', 'ua', 'en']) {
         return new Promise(async (resolve) => {
-            const currentNews = (await this.dbService.getNewsByIdAndLang(id, lang))[0];
-            const currentArticle = await this.getPage(currentNews.path);
-            const prevLinksStr = await this.getPrevLinksStr(id, lang)
-            const linksNodes = htmlStrToNode(prevLinksStr);
-            const newContent = [...currentArticle.result.content, ...linksNodes];
-
-            await this.updateNews(currentNews.path, currentNews.title, newContent)
+            for (const language of languageArr) {
+                const newsFromDb = (await this.dbService.getNewsByIdAndLang(id, language))[0];
+                let links = [];
+                const news = await this.getPage(newsFromDb.path);
+                this.removeEndTags(news, ['ul', 'br', 'h4']);
+                links = await this.getAllLinksNodes(newsFromDb.id, newsFromDb.lang);
+                await this.updateNews(news.result.path, news.result.title, [...news.result.content, ...links]);
+            }
             resolve();
         });
     }
@@ -108,15 +123,36 @@ class TelegrafService {
     async getPrevLinksStr(id, lang) {
         return new Promise(async (resolve) => {
             const prevNews = await this.dbService.getPrevNews(id, lang);
-
-            let linksStr = '<br><ul>';
+            let linksStr = '';
             for (const news of prevNews) {
                 linksStr += `<li><a href="${addTelegrafDomain(news.path)}">${news.title} (${news.date})</a></li>`
             }
-            linksStr += '</ul>';
-
-            resolve(linksStr);
+            resolve(linksStr ? `<ul>${linksStr}</ul>` : null);
         });
+    }
+
+    async getNextLinksStr(id, lang) {
+        return new Promise(async (resolve) => {
+            const prevNews = await this.dbService.getNextNews(id, lang);
+            let linksStr = '';
+            for (const news of prevNews) {
+                linksStr += `<li><a href="${addTelegrafDomain(news.path)}">${news.title} (${news.date})</a></li>`
+            }
+            resolve(linksStr ? `<ul>${linksStr}</ul>` : null);;
+        });
+    }
+
+    async getAllLinksNodes(id, language) {
+        let linksStr = '<br>';
+        const prevLinksStr = await this.getPrevLinksStr(id, language);
+        const nextLinksStr = await this.getNextLinksStr(id, language);
+        if (prevLinksStr) {
+            linksStr += `<h4>${lang.prev_links_title[language]}</h4>${prevLinksStr}`;
+        }
+        if (nextLinksStr) {
+            linksStr += `<h4>${lang.next_links_title[language]}</h4>${nextLinksStr}`;
+        }
+        return htmlStrToNode(linksStr);
     }
 
     async addNews(newsId, language, news, images) {
@@ -195,12 +231,14 @@ class TelegrafService {
                     'Content-Length': contentLength,
                     'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                uri: `https://api.telegra.ph/editPage/${path}`,
+                uri: encodeURI(`https://api.telegra.ph/editPage/${path}`),
                 body: formData,
                 method: 'POST'
             }, async (err, res, body) => {
-                if ((err)
-                    || (res.statusCode !== 200)) {
+                if (err) {
+                    return;
+                }
+                if (res.statusCode !== 200) {
                     reject(`Request error. Status code: ${res.statusCode}`);
                     return;
                 }

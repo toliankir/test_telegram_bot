@@ -89,7 +89,6 @@ class DBService {
         });
     }
 
-
     async getConfig(key) {
         return new Promise(resolve => {
             this.firestore.collection('config').doc(this.configDoc).get().then(doc => {
@@ -125,6 +124,18 @@ class DBService {
     getPrevNews(id, lang, newsCount = 3) {
         return new Promise(resolve => {
             this.firestore.collection('news').where('lang', '==', lang).where('id', '<', id).where('id', '>=', id - newsCount).orderBy('id', 'desc').get().then(data => {
+                const news = [];
+                data.forEach(el => {
+                    news.push(el.data());
+                })
+                resolve(news);
+            });
+        })
+    }
+
+    getNextNews(id, lang, newsCount = 3) {
+        return new Promise(resolve => {
+            this.firestore.collection('news').where('lang', '==', lang).where('id', '>', id).where('id', '<=', id + newsCount).orderBy('id', 'desc').get().then(data => {
                 const news = [];
                 data.forEach(el => {
                     news.push(el.data());

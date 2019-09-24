@@ -45,13 +45,17 @@ class BotService {
         this.bot.hears(/^addLinks\d+$/, async (ctx) => {
             const requestedNewsId = parseInt(ctx.match[0].match(/^addLinks(\d+)/)[1]);
             this.telegrafService.addPrevLinksToNews(requestedNewsId, ctx.session.langCode);
-
         });
 
         this.bot.hears('test', async (ctx) => {
-            console.log(ctx.session.langCode);
+            for (let i = 1; i <= 45; i++) {
+                await this.telegrafService.addAllLinksToNews(i);
+                console.log(i);
+            }
         });
 
+        this.bot.hears('test2', async (ctx) => {
+        });
     }
 
     addActionHandlers() {
