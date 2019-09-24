@@ -96,7 +96,7 @@ class BotService {
             }
         });
 
-        this.bot.command('syncByUpdate', async (ctx) => {
+        this.bot.command('sync_by_update', async (ctx) => {
             this.newsService.initNews();
             const { message_id: msgId, chat: { id: chatId } } = await ctx.reply('Start news sync by update existing.');
             const newsCount = this.newsService.getNewsCount();
@@ -107,7 +107,7 @@ class BotService {
             }
         });
 
-        this.bot.command('addLinks', async (ctx) => {
+        this.bot.command('add_links', async (ctx) => {
             this.newsService.initNews();
             const { message_id: msgId, chat: { id: chatId } } = await ctx.reply('Start add links to news.');
             const newsCount = this.newsService.getNewsCount();
@@ -118,7 +118,7 @@ class BotService {
             }
         });
 
-        this.bot.command('buildArchive', async (ctx) => {
+        this.bot.command('build_archive', async (ctx) => {
             await this.telegrafService.updateArchive();
             ctx.reply('New archive created.');
         });
