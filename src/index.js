@@ -12,13 +12,20 @@ serviceStart();
 async function serviceStart() {
     logger.log({
         level: 'info',
-        message: 'What time is the testing at?'
+        message: 'SHPP Telegram bot starts...'
     });
     const dbService = new DBService();
     const newsService = new NewsService();
 
-    await dbService.init();
-    await newsService.initNews();
+    try {
+        await dbService.init();
+        await newsService.initNews();
+    } catch (err) {
+        logger.log({
+            level: 'error',
+            message: err
+        });
+    }
 
     const telegrafService = new TelegrafService(dbService, newsService);
     const newsController = new NewsController(newsService, dbService, telegrafService);

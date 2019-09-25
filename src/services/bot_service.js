@@ -5,7 +5,7 @@ const lang = require('../../lang/lang.json');
 const Stage = require('telegraf/stage');
 const WizardScene = require('telegraf/scenes/wizard');
 const Markup = require('telegraf/markup');
-
+const {logger} = require('./logger');
 
 class BotService {
 
@@ -44,13 +44,20 @@ class BotService {
 
     addMessaageHandlers() {
         this.bot.hears(/^get\d+/, async (ctx) => {
-
             const requestedNewsId = parseInt(ctx.match[0].match(/^get(\d+)/)[1]);
             let publishNews = (await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode))[0];
             if (!publishNews) {
                 ctx.reply('Can not find news in database.');
+                logger.log({
+                    level: 'verbose',
+                    message: `${userForLogs(ctx.from)} request news #${requestedNewsId}, news don't found in database.`
+                });
                 return;
             }
+            logger.log({
+                level: 'verbose',
+                message: `${userForLogs(ctx.from)} request news #${requestedNewsId}.`
+            });
             ctx.reply(addTelegrafDomainToNews(publishNews).path);
         });
 
@@ -153,3 +160,7 @@ class BotService {
 }
 
 module.exports.BotService = BotService;
+
+function userForLogs(from) {
+    return `${from.username} #${from.id}`;
+}

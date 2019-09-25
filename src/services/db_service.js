@@ -18,8 +18,7 @@ class DBService {
 
     async init() {
         this.fireApp = firebase.initializeApp(this.firebaseConfig);
-        // await this.auth();
-
+        await this.auth();
         this.firestore = this.fireApp.firestore();
     }
 
@@ -32,7 +31,7 @@ class DBService {
                 });
                 resolve();
             }).catch(err => {
-                reject(`${err.code}: ${err.message}`)
+                reject(err)
             });
         });
     }

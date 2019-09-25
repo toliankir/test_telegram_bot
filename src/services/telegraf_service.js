@@ -13,12 +13,10 @@ class TelegrafService {
         return new Promise((resolve, reject) => {
             request({ url: encodeURI(`https://api.telegra.ph/getPage/${path}`), qs: { return_content: true } }, (err, res, body) => {
                 if (err) {
-                    console.log(err);
-                    return;
+                    return reject(err);
                 }
                 if (res.statusCode !== 200) {
-                    reject(`Request error. Status code: ${res.statusCode}`);
-                    return;
+                    return reject(`Telegraf api get page request error. Status code: ${res.statusCode}`);
                 }
                 resolve(JSON.parse(body));
             });
@@ -45,15 +43,15 @@ class TelegrafService {
                 body: formData,
                 method: 'POST'
             }, async (err, res, body) => {
-                if ((err)
-                    || (res.statusCode !== 200)) {
-                    reject(`Request error. Status code: ${res.statusCode}`);
-                    return;
+                if (err) {
+                    return reject(err);
+                }
+                if (res.statusCode !== 200) {
+                    return reject(`Telegraf api create page request error. Status code: ${res.statusCode}`);
                 }
                 const jsonData = JSON.parse(body);
                 if (!jsonData.ok) {
-                    reject(`Telegraf error: ${jsonData.error}`);
-                    return;
+                    return reject(`Telegraf response error: ${jsonData.error}`);
                 }
                 resolve(jsonData.result.path);
             });
@@ -82,16 +80,14 @@ class TelegrafService {
                 method: 'POST'
             }, async (err, res, body) => {
                 if (err) {
-                    return;
+                    return reject(err);
                 }
                 if (res.statusCode !== 200) {
-                    reject(`Request error. Status code: ${res.statusCode}`);
-                    return;
+                    return reject(`Telegraf api update page request error. Status code: ${res.statusCode}`);
                 }
                 const jsonData = JSON.parse(body);
                 if (!jsonData.ok) {
-                    reject(`Telegraf error: ${jsonData.error}`);
-                    return;
+                    return reject(`Telegraf response error: ${jsonData.error}`);
                 }
                 resolve(jsonData.result.path);
             });
