@@ -8,6 +8,7 @@ class NewsService {
         this.apiUrl = process.env.news_api_url;
         this.newsCount = 0;
     }
+
     getNewsCount() {
         return this.newsCount;
     }
