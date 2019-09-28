@@ -2,7 +2,7 @@ require("dotenv").config();
 const { JSDOM } = require('jsdom');
 const lang = require('../../lang/lang.json');
 const { getNewsOnLanguage, addTelegrafDomainToNews, addTelegrafDomain } = require('../helpers/adapters');
-
+const { logger } = require('../services/logger');
 class NewsController {
     constructor(newsService, dbService, telegrafService) {
         this.newsService = newsService;
@@ -25,11 +25,31 @@ class NewsController {
                 }
                 if (!newsDbOnLang && forceAdd) {
                     await this.addNews(newsId, sourceOnLang, language);
+                    logger.log({
+                        level: 'verbose',
+                        message: `News #${newsId}/${language} added to DB.`
+                    });
                 }
             }
             setTimeout(() => {
                 resolve();
             }, process.env.telegraf_syncDelay);
+        });
+    }
+
+    async syncNewNews() {
+        const lastNewsInDb = await this.dbService.getLastNewsId();
+        await this.newsService.initNews();
+        const lastNewsInSource = this.newsService.getNewsCount();
+        if (lastNewsInSource === lastNewsInDb) {
+            return;
+        }
+        for (let newsId = lastNewsInDb + 1; newsId <= lastNewsInSource; newsId++) {
+            await this.syncNews(newsId, true);
+        }
+        logger.log({
+            level: 'info',
+            message: `NewsController: Add news from #${lastNewsInDb} to #${lastNewsInSource}.`
         });
     }
 
@@ -45,7 +65,6 @@ class NewsController {
         return new Promise(async (resolve) => {
             for (const language of languageArr) {
                 const newsFromDb = (await this.dbService.getNewsByIdAndLang(id, language))[0];
-
                 const news = await this.telegrafService.getPage(newsFromDb.path);
                 removeEndTags(news, ['ul', 'br', 'h4']);
                 const links = await this.getAllLinksNodes(newsFromDb.id, newsFromDb.lang);
@@ -65,7 +84,7 @@ class NewsController {
         if (nextLinksStr) {
             linksStr += `<h4>${lang.next_links_title[language]}</h4>${nextLinksStr}`;
         }
-        linksStr += `<ul><li><a href=${addTelegrafDomain(await this.dbService.getConfig(`archive_${language}`))}>${lang.arhive_title[language]}</a></li></ul>`;
+        linksStr += `<h4><a href=${addTelegrafDomain(await this.dbService.getConfig(`archive_${language}`))}>${lang.arhive_title[language]}</a></h4>`;
         return htmlStrToNode(linksStr);
     }
 
@@ -106,7 +125,7 @@ class NewsController {
 
             for (const langKey in news) {
                 news[langKey] += '</ul>';
-                const pagePath = await this.createPage(lang.arhive_title[langKey], htmlStrToNode(news[langKey]));
+                const pagePath = await this.telegrafService.createPage(lang.arhive_title[langKey], htmlStrToNode(news[langKey]));
                 await this.dbService.setConfig(`archive_${langKey}`, pagePath);
             }
             resolve();

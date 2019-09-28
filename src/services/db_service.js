@@ -37,16 +37,16 @@ class DBService {
     }
 
     async saveUser(user) {
-        const [dbUserData] = await this.getUserById(user.id);
+        const dbUserData = (await this.getUserById(user.id))[0];
         if (dbUserData) {
-            await this.firestore.collection('users').doc(dbUserData.uid).set(user);
+            await this.firestore.collection('users').doc(dbUserData.uid).update(user);
             return;
         }
         await this.firestore.collection('users').add(user);
     }
 
     async getUserById(userTelegramId) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             this.firestore.collection('users').where('id', '==', userTelegramId).get().then(data => {
                 const user = [];
                 data.forEach(el => {
@@ -56,8 +56,16 @@ class DBService {
                     });
                 });
                 resolve(user);
-            });
-        }).catch(err => console.log(err));
+            }).catch(err => reject(err));
+        });
+    }
+
+    async getAllUsers() {
+        return new Promise((resolve, reject) => {
+            this.firestore.collection('users').get().then(data => {
+                resolve(data);
+            }).catch(err => reject(err));
+        });
     }
 
     async saveNews(id, sourceNews, lang, path) {
@@ -72,6 +80,18 @@ class DBService {
                 .then(() => resolve())
                 .catch(err => reject(err));
         });
+    }
+
+    async getLastNewsId() {
+        return new Promise(async (resolve, reject) => {
+            this.firestore.collection('news').orderBy('id', 'desc').limit(1).get().then(data => {
+                data.forEach(async (el) => {
+                    return resolve(el.data().id);
+                })
+            })
+                .catch(err => reject(err));
+        });
+
     }
 
     async getNewsByIdAndLang(newsId, lang = null) {
@@ -130,7 +150,7 @@ class DBService {
         });
     }
 
-    getPrevNews(id, lang, newsCount = 3) {
+    getPrevNews(id, lang, newsCount = parseInt(process.env.news_dependence_count)) {
         return new Promise(resolve => {
             this.firestore.collection('news').where('lang', '==', lang).where('id', '<', id).where('id', '>=', id - newsCount).orderBy('id', 'desc').get().then(data => {
                 const news = [];
@@ -142,7 +162,7 @@ class DBService {
         })
     }
 
-    getNextNews(id, lang, newsCount = 3) {
+    getNextNews(id, lang, newsCount = parseInt(process.env.news_dependence_count)) {
         return new Promise(resolve => {
             this.firestore.collection('news').where('lang', '==', lang).where('id', '>', id).where('id', '<=', id + newsCount).orderBy('id', 'desc').get().then(data => {
                 const news = [];

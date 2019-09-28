@@ -6,7 +6,7 @@ const { combine, timestamp, printf } = format;
 const logger = createLogger({
     transports: [
         new transports.Console({
-            level: 'verbose',
+            level: 'debug',
             format: combine(
                 timestamp(),
                 format.printf(({ level, message, timestamp }) => {

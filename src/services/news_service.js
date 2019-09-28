@@ -26,8 +26,8 @@ class NewsService {
             this.newsCount = respJson.data.newsCount;
             const news = respJson.data.news.find(el => el.id === id);
             logger.log({
-                level: 'verbose',
-                message: `Get message from source: #${id}`
+                level: 'debug',
+                message: `NewsService: Get message from source api: #${id}`
             });
             resolve(news);
         });
@@ -48,7 +48,7 @@ class NewsService {
 
             logger.log({
                 level: 'info',
-                message: `Start newsService. ${this.newsCount} news available.`
+                message: `Init news source ${this.apiUrl}. ${this.newsCount} news available.`
             });
 
             resolve();

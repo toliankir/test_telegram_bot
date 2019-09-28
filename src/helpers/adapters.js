@@ -6,7 +6,9 @@ function fromToUserAdapter({ id, first_name = null, last_name = null, username =
         first_name,
         last_name,
         username,
-        lang
+        lang,
+        active: true,
+        last_msg: 0
     }
 }
 
