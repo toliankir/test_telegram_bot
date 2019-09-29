@@ -217,7 +217,10 @@ class BotService {
                     try {
                         await this.bot.telegram.sendMessage(id, addTelegrafDomainToNews(news).path);
                     } catch (err) {
-                        console.log(err);
+                        logger.log({
+                            level: 'error',
+                            message: `BotService: sendMessage error #${err.response.error_code} ${err.response.description}.`
+                        });
                     }
                 }
             });

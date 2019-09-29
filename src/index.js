@@ -35,7 +35,6 @@ async function serviceStart() {
     const telegrafService = new TelegrafService(dbService, newsService);
     const newsController = new NewsController(newsService, dbService, telegrafService);
 
-
     const botService = new BotService(dbService, newsService, newsController);
     botService.launch();
 
