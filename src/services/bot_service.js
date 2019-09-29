@@ -42,7 +42,7 @@ class BotService {
             ctx.reply(addTelegrafDomain(archivePath));
             logger.log({
                 level: 'verbose',
-                message: `BotService: ${userForLogs(ctx.from)} request archive.`
+                message: `BotService: user #${ctx.from.id} request archive.`
             });
         });
 
