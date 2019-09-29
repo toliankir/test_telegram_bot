@@ -38,12 +38,7 @@ class BotService {
 
         this.bot.hears(getRegExForLang('archive_title'), async (ctx) => {
             ctx.telegram.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
-            const archivePath = await this.dbService.getConfig(`archive_${ctx.session.langCode}`);
-            ctx.reply(addTelegrafDomain(archivePath));
-            logger.log({
-                level: 'verbose',
-                message: `BotService: user #${ctx.from.id} request archive.`
-            });
+            this.archive(ctx);
         });
 
         this.bot.hears(getRegExForLang('language_select_title'), async (ctx) => {
@@ -53,37 +48,12 @@ class BotService {
 
         this.bot.hears(getRegExForLang('subscribe_title'), async (ctx) => {
             await ctx.telegram.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
-            const { data: user } = (await this.dbService.getUserById(ctx.from.id))[0];
-            const lastMsgId = await this.dbService.getLastNewsId();
-            ctx.reply(lang['subscribe_text'][ctx.session.langCode], this.getMainKeyboard(ctx.session.langCode, true));
-            const firstNewsToSend = user.last_msg + 1;
-            if (firstNewsToSend < lastMsgId) {
-                ctx.reply(lang['unreaded_news_text'][ctx.session.langCode]);
-            }
-            for (let newsId = firstNewsToSend; newsId <= lastMsgId; newsId++) {
-                const news = (await this.dbService.getNewsByIdAndLang(newsId, user.lang))[0];
-                ctx.reply(addTelegrafDomainToNews(news).path);
-            }
-            await this.dbService.saveUser({
-                id: ctx.from.id,
-                active: true,
-                last_msg: lastMsgId
-            });
-            logger.log({
-                level: 'info',
-                message: `BotService: user #${ctx.from.id} subscribe for a news.`
-            });
-
+            this.subscribe(ctx);
         });
 
         this.bot.hears(getRegExForLang('unsubscribe_title'), async (ctx) => {
             await ctx.telegram.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
-            this.dbService.saveUser({ id: ctx.from.id, active: false });
-            logger.log({
-                level: 'info',
-                message: `BotService: user #${ctx.from.id} unsubscribe for a news.`
-            });
-            ctx.reply(lang['unsubscribe_text'][ctx.session.langCode], this.getMainKeyboard(ctx.session.langCode, false));
+            this.unsubscribe(ctx);
         });
 
         this.bot.hears('test', async (ctx) => {
@@ -91,6 +61,47 @@ class BotService {
             await this.sendNewNewsForAllUsers();
         });
 
+    }
+
+    async subscribe(ctx) {
+        const { data: user } = (await this.dbService.getUserById(ctx.from.id))[0];
+        const lastMsgId = await this.dbService.getLastNewsId();
+        ctx.reply(lang['subscribe_text'][ctx.session.langCode], this.getMainKeyboard(ctx.session.langCode, true));
+        const firstNewsToSend = user.last_msg + 1;
+        if (firstNewsToSend < lastMsgId) {
+            ctx.reply(lang['unreaded_news_text'][ctx.session.langCode]);
+        }
+        for (let newsId = firstNewsToSend; newsId <= lastMsgId; newsId++) {
+            const news = (await this.dbService.getNewsByIdAndLang(newsId, user.lang))[0];
+            ctx.reply(addTelegrafDomainToNews(news).path);
+        }
+        await this.dbService.saveUser({
+            id: ctx.from.id,
+            active: true,
+            last_msg: lastMsgId
+        });
+        logger.log({
+            level: 'info',
+            message: `BotService: user #${ctx.from.id} subscribe for a news.`
+        });
+    }
+
+    async unsubscribe(ctx) {
+        this.dbService.saveUser({ id: ctx.from.id, active: false });
+        logger.log({
+            level: 'info',
+            message: `BotService: user #${ctx.from.id} unsubscribe for a news.`
+        });
+        ctx.reply(lang['unsubscribe_text'][ctx.session.langCode], this.getMainKeyboard(ctx.session.langCode, false));
+    }
+
+    async archive(ctx) {
+        const archivePath = await this.dbService.getConfig(`archive_${ctx.session.langCode}`);
+        ctx.reply(addTelegrafDomain(archivePath));
+        logger.log({
+            level: 'verbose',
+            message: `BotService: user #${ctx.from.id} request archive.`
+        });
     }
 
     addActionHandlers() {
@@ -113,6 +124,22 @@ class BotService {
         this.bot.command('keyboard', async (ctx) => {
             const user = (await this.dbService.getUserById(ctx.from.id))[0];
             ctx.reply(lang['keyboard_title'][ctx.session.langCode], this.getMainKeyboard(ctx.session.langCode, user.data.active));
+        });
+
+        this.bot.command('subscribe', async (ctx) => {
+            this.subscribe(ctx);
+        });
+
+        this.bot.command('unsubscribe', async (ctx) => {
+            this.unsubscribe(ctx);
+        });
+
+        this.bot.command('archive', async (ctx) => {
+            this.archive(ctx);
+        });
+
+        this.bot.command('language', async (ctx) => {
+            ctx.scene.enter('startScene');
         });
     }
 
@@ -201,8 +228,6 @@ class BotService {
         this.addMessaageHandlers();
         this.addCommandHandlers();
 
-
-
         this.bot.launch();
         this.bot.start(async (ctx) => {
             ctx.scene.enter('startScene');
@@ -215,7 +240,6 @@ module.exports.BotService = BotService;
 function userForLogs(from) {
     return `${from.username} #${from.id}`;
 }
-
 
 function getRegExForLang(field) {
     return new RegExp('(' + Object.values(lang[field]).join(')|(') + ')', '');
