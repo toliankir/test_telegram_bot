@@ -208,14 +208,14 @@ class BotService {
                     let news = newsCache.find(el => el.id == newsId && el.lang === lang);
                     if (!news) {
                         news = (await this.dbService.getNewsByIdAndLang(newsId, lang))[0];
-                        newsCache.push(news);
+                        newsCache.push(addTelegrafDomainToNews(news));
                     }
                     this.dbService.saveUser({
                         id,
                         last_msg: lastNewsId
                     });
                     try {
-                        await this.bot.telegram.sendMessage(id, addTelegrafDomainToNews(news).path);
+                        await this.bot.telegram.sendMessage(id, news.path);
                     } catch (err) {
                         logger.log({
                             level: 'error',
