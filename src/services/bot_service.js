@@ -214,7 +214,11 @@ class BotService {
                         id,
                         last_msg: lastNewsId
                     });
-                    this.bot.telegram.sendMessage(id, addTelegrafDomainToNews(news).path);
+                    try {
+                        await this.bot.telegram.sendMessage(id, addTelegrafDomainToNews(news).path);
+                    } catch (err) {
+                        console.log(err);
+                    }
                 }
             });
             resolve();
