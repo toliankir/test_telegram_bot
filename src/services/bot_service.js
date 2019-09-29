@@ -93,7 +93,6 @@ class BotService {
 
     }
 
-
     addActionHandlers() {
     }
 
@@ -111,81 +110,9 @@ class BotService {
     }
 
     addCommandHandlers() {
-        this.bot.command('sync', async (ctx) => {
-            this.newsService.initNews();
-            const { message_id: msgId, chat: { id: chatId } } = await ctx.reply('Start news sync by update existing with add missing news.');
-            const newsCount = this.newsService.getNewsCount();
-            for (let sourceNewsIndex = 1; sourceNewsIndex <= newsCount; sourceNewsIndex++) {
-                await this.newsController.syncNews(sourceNewsIndex, true);
-                ctx.telegram.editMessageText(chatId, msgId, null, `Start news sync by update existing with add missing news.
-                Completed: ${sourceNewsIndex}/${newsCount}`);
-            }
-            ctx.telegram.editMessageText(chatId, msgId, null, `Start news sync by update existing with add missing news.
-            Completed: ${newsCount} synced.`);
-        });
-
-        this.bot.command('sync_by_update', async (ctx) => {
-            this.newsService.initNews();
-            const { message_id: msgId, chat: { id: chatId } } = await ctx.reply('Start news sync by update existing.');
-            const newsCount = this.newsService.getNewsCount();
-            for (let sourceNewsIndex = 1; sourceNewsIndex <= newsCount; sourceNewsIndex++) {
-                await this.newsController.syncNews(sourceNewsIndex);
-                ctx.telegram.editMessageText(chatId, msgId, null, `Start news sync by update existing.
-                Completed: ${sourceNewsIndex}/${newsCount}`);
-            }
-            ctx.telegram.editMessageText(chatId, msgId, null, `Start news sync by update existing.
-            Completed: ${newsCount} synced.`);
-        });
-
-        this.bot.command('add_links', async (ctx) => {
-            this.newsService.initNews();
-            const { message_id: msgId, chat: { id: chatId } } = await ctx.reply('Start add links to news.');
-            const newsCount = this.newsService.getNewsCount();
-            for (let sourceNewsIndex = 1; sourceNewsIndex <= newsCount; sourceNewsIndex++) {
-                await this.newsController.addAllLinksToNews(sourceNewsIndex);
-                ctx.telegram.editMessageText(chatId, msgId, null, `Start add links to news.
-                Completed: ${sourceNewsIndex}/${newsCount}`);
-            }
-            ctx.telegram.editMessageText(chatId, msgId, null, `Start add links to news.
-                Completed: ${newsCount} links added.`);
-        });
-
-        this.bot.command('build_archive', async (ctx) => {
-            await this.newsController.updateArchive();
-            ctx.reply('New archive created.');
-        });
-
-        this.bot.command('archive', async (ctx) => {
-            const archivePath = await this.dbService.getConfig(`archive_${ctx.session.langCode}`);
-            ctx.reply(addTelegrafDomain(archivePath));
-        });
-
-        this.bot.command('subscribe', async (ctx) => {
-            ctx.reply('You are subscribe for a news.');
-            const { data: user } = (await this.dbService.getUserById(ctx.from.id))[0];
-            const lastMsgId = await this.dbService.getLastNewsId();
-            for (let newsId = user.last_msg + 1; newsId <= lastMsgId; newsId++) {
-                const news = (await this.dbService.getNewsByIdAndLang(newsId, user.lang))[0];
-                ctx.reply(addTelegrafDomainToNews(news).path);
-            }
-            await this.dbService.saveUser({
-                id: ctx.from.id,
-                active: true,
-                last_msg: lastMsgId
-            });
-            logger.log({
-                level: 'info',
-                message: `BotService: user #${ctx.from.id} subscribe for a news.`
-            });
-        });
-
-        this.bot.command('unsubscribe', async (ctx) => {
-            this.dbService.saveUser({ id: ctx.from.id, active: false });
-            logger.log({
-                level: 'info',
-                message: `BotService: user #${ctx.from.id} unsubscribe for a news.`
-            });
-            ctx.reply('You are unsubscribe for a news.', this.getMainKeyboard(ctx.session.langCode, false));
+        this.bot.command('keyboard', async (ctx) => {
+            const user = (await this.dbService.getUserById(ctx.from.id))[0];
+            ctx.reply(lang['keyboard_title'][ctx.session.langCode], this.getMainKeyboard(ctx.session.langCode, user.data.active));
         });
     }
 
