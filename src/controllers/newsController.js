@@ -27,7 +27,7 @@ class NewsController {
                     await this.addNews(newsId, sourceOnLang, language);
                     logger.log({
                         level: 'verbose',
-                        message: `News #${newsId}/${language} added to DB.`
+                        message: `NewsController: News #${newsId}/${language} added to DB.`
                     });
                 }
             }
@@ -51,6 +51,14 @@ class NewsController {
             level: 'info',
             message: `NewsController: Add news from #${lastNewsInDb} to #${lastNewsInSource}.`
         });
+        const firstNewsForLinks = lastNewsInDb - process.env.news_dependence_count + 1;
+        for (let newsId = firstNewsForLinks; newsId <= lastNewsInSource; newsId++) {
+            await this.addAllLinksToNews(newsId);
+        }
+        logger.log({
+            level: 'info',
+            message: `NewsController: Add links to news from #${firstNewsForLinks} to #${lastNewsInSource}.`
+        });
     }
 
     async addNews(newsId, sourceNews, language) {
@@ -70,6 +78,10 @@ class NewsController {
                 const links = await this.getAllLinksNodes(newsFromDb.id, newsFromDb.lang);
                 await this.telegrafService.updagePage(news.result.path, news.result.title, [...news.result.content, ...links]);
             }
+            logger.log({
+                level: 'verbose',
+                message: `NewsController: Add links to news #${id}/${languageArr.join(' ')}.`
+            });
             resolve();
         });
     }

@@ -178,12 +178,22 @@ class BotService {
         });
 
         this.bot.command('subscribe', async (ctx) => {
-            this.dbService.saveUser({ id: ctx.from.id, active: true });
+            ctx.reply('You are subscribe for a news.');
+            const { data: user } = (await this.dbService.getUserById(ctx.from.id))[0];
+            const lastMsgId = await this.dbService.getLastNewsId();
+            for (let newsId = user.last_msg + 1; newsId <= lastMsgId; newsId++) {
+                const news = (await this.dbService.getNewsByIdAndLang(newsId, user.lang))[0];
+                ctx.reply(addTelegrafDomainToNews(news).path);
+            }
+            await this.dbService.saveUser({
+                id: ctx.from.id,
+                active: true,
+                last_msg: lastMsgId
+            });
             logger.log({
                 level: 'info',
                 message: `BotService: user #${ctx.from.id} subscribe for a news.`
             });
-            ctx.reply('You are subscribe for a news.');
         });
 
         this.bot.command('unsubscribe', async (ctx) => {
@@ -194,9 +204,6 @@ class BotService {
             });
             ctx.reply('You are unsubscribe for a news.');
         });
-
-
-
     }
 
     launch() {

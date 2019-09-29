@@ -36,8 +36,9 @@ async function serviceStart() {
     const newsController = new NewsController(newsService, dbService, telegrafService);
 
 
-    const cronService = new CronService(newsController);
-    // cronService.setCrontTasks();
     const botService = new BotService(dbService, newsService, newsController);
     botService.launch();
+
+    const cronService = new CronService(newsController, botService);
+    cronService.setCronTasks();
 }

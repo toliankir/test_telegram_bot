@@ -37,12 +37,15 @@ class DBService {
     }
 
     async saveUser(user) {
-        const dbUserData = (await this.getUserById(user.id))[0];
-        if (dbUserData) {
-            await this.firestore.collection('users').doc(dbUserData.uid).update(user);
-            return;
-        }
-        await this.firestore.collection('users').add(user);
+        return new Promise(async (resolve) => {
+            const dbUserData = (await this.getUserById(user.id))[0];
+            if (dbUserData) {
+                await this.firestore.collection('users').doc(dbUserData.uid).update(user);
+                return resolve();
+            }
+            await this.firestore.collection('users').add(user);
+            return resolve();
+        });
     }
 
     async getUserById(userTelegramId) {
