@@ -47,7 +47,7 @@ class NewsService {
             this.newsCount = respJson.data.newsCount;
 
             logger.log({
-                level: 'info',
+                level: 'verbose',
                 message: `Init news source ${this.apiUrl}. ${this.newsCount} news available.`
             });
 

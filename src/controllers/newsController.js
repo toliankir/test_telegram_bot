@@ -42,6 +42,10 @@ class NewsController {
         await this.newsService.initNews();
         const lastNewsInSource = this.newsService.getNewsCount();
         if (lastNewsInSource === lastNewsInDb) {
+            logger.log({
+                level: 'info',
+                message: `NewsController: Nothing to synchronize Last db news id #${lastNewsInDb}, la api news id #${lastNewsInSource}.`
+            });
             return;
         }
         for (let newsId = lastNewsInDb + 1; newsId <= lastNewsInSource; newsId++) {

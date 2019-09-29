@@ -87,8 +87,8 @@ class BotService {
         });
 
         this.bot.hears('test', async (ctx) => {
-
-            this.newsController.syncNewNews();
+            await this.newsController.syncNewNews();
+            await this.sendNewNewsForAllUsers();
         });
 
     }
@@ -197,6 +197,10 @@ class BotService {
 
             usersData.forEach(async (userData) => {
                 const { id, active, lang, last_msg } = userData.data();
+                logger.log({
+                    level: 'debug',
+                    message: `BotService: Send news to user #${id}/active:${active}, last recived news #${last_msg}, sending ${lastNewsId - last_msg}.`
+                });
                 if (!active) {
                     return;
                 }
