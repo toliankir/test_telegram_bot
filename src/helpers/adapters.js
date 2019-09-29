@@ -1,14 +1,14 @@
 require('dotenv').config();
 
-function fromToUserAdapter({ id, first_name = null, last_name = null, username = null }, lang = 'ru') {
+function fromToUserAdapter({ id, first_name = null, last_name = null, username = null }) {
     return {
         id,
         first_name,
         last_name,
         username,
-        lang,
+        lang: 'ru',
         active: true,
-        last_msg: 0
+        last_msg: -1
     }
 }
 

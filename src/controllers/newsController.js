@@ -59,6 +59,7 @@ class NewsController {
             level: 'info',
             message: `NewsController: Add links to news from #${firstNewsForLinks} to #${lastNewsInSource}.`
         });
+        this.updateArchive();
     }
 
     async addNews(newsId, sourceNews, language) {

@@ -1,10 +1,10 @@
 {
-    "welcome_msg" : {
+    "welcome_msg": {
         "ua": "Приветсвие украинское. Напишите 'get#' что бы увидеть стать номер #.",
         "ru": "Приветсвие русское. Напишите 'get#' что бы увидеть стать номер #.",
         "en": "Приветсвие английское. Напишите 'get#' что бы увидеть стать номер #."
     },
-    "arhive_title" : {
+    "arhive_title": {
         "ua": "Архів новин",
         "ru": "Архив новостей",
         "en": "News archive"
@@ -18,5 +18,40 @@
         "ua": "Наступнi новини",
         "ru": "Следующие новости",
         "en": "Next news"
+    },
+    "language_select_title": {
+        "ua": "Оберiть мову",
+        "ru": "Выберите язык",
+        "en": "Select language"
+    },
+    "archive_title": {
+        "ua": "Архiв",
+        "ru": "Архив",
+        "en": "Archive"
+    },
+    "subscribe_title": {
+        "ua": "Подписатися",
+        "ru": "Подписаться",
+        "en": "Subscribe"
+    },
+    "unsubscribe_title": {
+        "ua": "Вiдписатися",
+        "ru": "Отписаться",
+        "en": "Ubsubscribe"
+    },
+    "subscribe_text": {
+        "ua": "Ви пiдписалися на новини.",
+        "ru": "Вы подписались на новости.",
+        "en": "You are subscribe for a news."
+    },
+    "unsubscribe_text": {
+        "ua": "Ви вiдписатися вiд новин.",
+        "ru": "Вы отписались от новостей.",
+        "en": "You are unsubscribe for a news."
+    },
+    "unreaded_news_text": {
+        "ua": "У Вас є непрочитані новини.",
+        "ru": "У Вас есть непрочитанные новости.",
+        "en": "You have unread news."
     }
 }
