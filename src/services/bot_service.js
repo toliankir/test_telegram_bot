@@ -67,10 +67,16 @@ class BotService {
         });
 
         this.bot.hears('test', async (ctx) => {
-            await this.newsController.syncNewNews();
-            await this.sendNewNewsForAllUsers();
+            this.newsController.syncAllNewsLinks();
         });
 
+        this.bot.hears(/.*/, (ctx) => {
+            this.dontKnow(ctx);
+        })
+    }
+
+    dontKnow(ctx) {
+        ctx.reply(`Я не знаю что такое "${ctx.message.text}" я всего лишь бот. чтоб у знать что я могу нажмите /help"`);
     }
 
     async subscribe(ctx) {
@@ -150,6 +156,19 @@ class BotService {
 
         this.bot.command('language', async (ctx) => {
             ctx.scene.enter('startScene');
+        });
+
+        this.bot.command('help', (ctx) => {
+            ctx.reply(`/keyboard - Show keyboard
+/subscribe - Subscribe to the news
+/unsubscribe - Unsubscribe from the news
+/archive - Get archive link
+/language - Select lenguage
+/help - This help`);
+        });
+
+        this.bot.command(/.*/, (ctx) => {
+            this.dontKnow(ctx)
         });
     }
 
@@ -235,8 +254,8 @@ class BotService {
         this.bot = new Telegraf(this.token);
         this.addMiddelwares();
         this.addActionHandlers();
-        this.addMessaageHandlers();
         this.addCommandHandlers();
+        this.addMessaageHandlers();
 
         this.bot.launch();
         this.bot.start(async (ctx) => {

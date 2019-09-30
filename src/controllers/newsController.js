@@ -10,6 +10,18 @@ class NewsController {
         this.telegrafService = telegrafService;
     }
 
+    async syncAllNewsLinks() {
+        await this.newsService.initNews();
+        const sourceNewsCount = this.newsService.getNewsCount();
+        for (let newsId = 1; newsId <= sourceNewsCount; newsId++) {
+            await this.syncNews(newsId, true);
+        }
+        for (let newsId = 1; newsId <= sourceNewsCount; newsId++) {
+            await this.addAllLinksToNews(newsId);
+        }
+        this.updateArchive();
+    }
+
     async syncNews(newsId, forceAdd = false, languageArr = ['ua', 'ru', 'en']) {
         return new Promise(async (resolve) => {
             const sourceNews = await this.newsService.getNewsById(newsId);
@@ -18,11 +30,10 @@ class NewsController {
                 const newsDbOnLang = newsFromDb.find((el) => el.lang === language);
                 const sourceOnLang = getNewsOnLanguage(sourceNews, language);
                 sourceOnLang.title = getNewsTitle(sourceOnLang);
-                const media = [...getVideosHtmlStrArr([sourceNews.video]), ...getImagesHtmlStrArr(sourceNews.images)]
+                // const media = [...getVideosHtmlStrArr([sourceNews.video]), ...getImagesHtmlStrArr(sourceNews.images)]
+                const media = getImagesHtmlStrArr(sourceNews.images);
                 sourceOnLang.text = addMediaToNewsContent(sourceOnLang.text, media);
-                console.log(htmlStrToNode(sourceOnLang.text));
                 if (newsDbOnLang) {
-                    console.log(sourceOnLang.text);
                     await this.telegrafService.updagePage(newsDbOnLang.path, sourceOnLang.title, htmlStrToNode(sourceOnLang.text));
                     logger.log({
                         level: 'verbose',
