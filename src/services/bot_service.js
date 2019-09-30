@@ -158,7 +158,7 @@ class BotService {
             ctx.scene.enter('startScene');
         });
 
-           this.bot.command('help', (ctx) => {
+        this.bot.command('help', (ctx) => {
             ctx.reply(`/keyboard - Show keyboard
 /subscribe - Subscribe to the news
 /unsubscribe - Unsubscribe from the news
@@ -222,7 +222,8 @@ class BotService {
         return new WizardScene(
             'startScene',
             async (ctx) => {
-                ctx.reply(lang['language_select_title'][ctx.from.language_code], Markup.keyboard([
+                const languageCode = lang.languages.indexOf(ctx.from.language_code) !== -1 ? ctx.from.language_code : 'en';
+                ctx.reply(lang.welcome_msg[languageCode], Markup.keyboard([
                     ['ru', 'ua', 'en']
                 ])
                     .oneTime()
@@ -239,7 +240,7 @@ class BotService {
                 user.lang = ctx.message.text;
                 ctx.session.langCode = user.lang;
                 ctx.telegram.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
-                ctx.reply(lang.welcome_msg[user.lang], this.getMainKeyboard(user.lang, user.active));
+                ctx.reply(lang.second_welcome_msg[user.lang], this.getMainKeyboard(user.lang, user.active));
                 const lastNewsId = this.newsService.getNewsCount();
                 const news = (await this.dbService.getNewsByIdAndLang(lastNewsId, user.lang))[0];
                 ctx.reply(addTelegrafDomainToNews(news).path);
