@@ -76,7 +76,7 @@ class BotService {
     }
 
     dontKnow(ctx) {
-        ctx.reply(`Я не знаю что такое "${ctx.message.text}" я всего лишь бот. чтоб у знать что я могу нажмите /help"`);
+        ctx.reply(`Я не знаю что такое "${ctx.message.text}", я всего лишь бот. Чтоб у знать что я могу нажмите /help`);
     }
 
     async subscribe(ctx) {
