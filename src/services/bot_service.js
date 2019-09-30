@@ -158,7 +158,7 @@ class BotService {
             ctx.scene.enter('startScene');
         });
 
-        this.bot.command('help', (ctx) => {
+           this.bot.command('help', (ctx) => {
             ctx.reply(`/keyboard - Show keyboard
 /subscribe - Subscribe to the news
 /unsubscribe - Unsubscribe from the news
@@ -231,6 +231,10 @@ class BotService {
                 return ctx.wizard.next();
             },
             async (ctx) => {
+                if (lang.languages.indexOf(ctx.message.text) === -1) {
+                    ctx.scene.leave();
+                    return ctx.scene.enter('startScene');
+                }
                 const user = fromToUserAdapter(ctx.from);
                 user.lang = ctx.message.text;
                 ctx.session.langCode = user.lang;
