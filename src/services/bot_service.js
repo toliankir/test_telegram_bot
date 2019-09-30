@@ -70,9 +70,9 @@ class BotService {
             this.newsController.syncAllNewsLinks();
         });
 
-        this.bot.hears(/.*/, (ctx) => {
-            this.dontKnow(ctx);
-        })
+        // this.bot.hears(/.*/, (ctx) => {
+        //     this.dontKnow(ctx);
+        // })
     }
 
     dontKnow(ctx) {
@@ -167,9 +167,6 @@ class BotService {
 /help - This help`);
         });
 
-        this.bot.command(/.*/, (ctx) => {
-            this.dontKnow(ctx)
-        });
     }
 
     async sendNewNewsForAllUsers() {
