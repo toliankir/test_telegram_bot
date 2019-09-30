@@ -18,9 +18,16 @@ class NewsController {
                 const newsDbOnLang = newsFromDb.find((el) => el.lang === language);
                 const sourceOnLang = getNewsOnLanguage(sourceNews, language);
                 sourceOnLang.title = getNewsTitle(sourceOnLang);
-                sourceOnLang.text = addImagesToNewsContent(sourceOnLang.text, sourceNews.images);
+                const media = [...getVideosHtmlStrArr([sourceNews.video]), ...getImagesHtmlStrArr(sourceNews.images)]
+                sourceOnLang.text = addMediaToNewsContent(sourceOnLang.text, media);
+                console.log(htmlStrToNode(sourceOnLang.text));
                 if (newsDbOnLang) {
+                    console.log(sourceOnLang.text);
                     await this.telegrafService.updagePage(newsDbOnLang.path, sourceOnLang.title, htmlStrToNode(sourceOnLang.text));
+                    logger.log({
+                        level: 'verbose',
+                        message: `NewsController: Update news #${newsId}/${language}.`
+                    });
                     continue;
                 }
                 if (!newsDbOnLang && forceAdd) {
@@ -185,12 +192,26 @@ function domToNode(domNode) {
     return nodeElement;
 }
 
-function addImagesToNewsContent(content, imagesArr) {
+function getImagesHtmlStrArr(imagesArr) {
+    if (!imagesArr || !imagesArr[0]) {
+        return [];
+    }
+    return imagesArr.map(el => `<img src="${process.env.news_api_imageDomainPrefix}${el}">`)
+}
+
+function getVideosHtmlStrArr(videosArr) {
+    if (!videosArr || !videosArr[0]) {
+        return [];
+    }
+    return videosArr.map(el => `<figure><iframe src="/embed/youtube?url=${el}" frameborder="0" allowfullscreen></iframe><figcaption>${el}</figcaption></figure>`)
+}
+
+function addMediaToNewsContent(content, mediaArr) {
     let result = content;
-    if (imagesArr && imagesArr[0]) {
-        result = `<img src="${process.env.news_api_imageDomainPrefix}${imagesArr[0]}">` + result;
-        for (let imageIndex = 1; imageIndex < imagesArr.length; imageIndex++) {
-            result += `<img src="${process.env.news_api_imageDomainPrefix}${imagesArr[imageIndex]}">`;
+    if (mediaArr && mediaArr[0]) {
+        result = mediaArr[0] + result;
+        for (let mediaIndex = 1; mediaIndex < mediaArr.length; mediaIndex++) {
+            result += mediaArr[mediaIndex];
         }
     }
     return result;

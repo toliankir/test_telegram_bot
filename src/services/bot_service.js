@@ -36,6 +36,16 @@ class BotService {
             ctx.reply(addTelegrafDomainToNews(publishNews).path);
         });
 
+        this.bot.hears(/^sync\d+/, async (ctx) => {
+            const requestedNewsId = parseInt(ctx.match[0].match(/^sync(\d+)/)[1]);
+            this.newsController.syncNews(requestedNewsId, false);
+        });
+
+        this.bot.hears(/^addLinks\d+/, async (ctx) => {
+            const requestedNewsId = parseInt(ctx.match[0].match(/^addLinks(\d+)/)[1]);
+            this.newsController.addAllLinksToNews(requestedNewsId);
+        });
+
         this.bot.hears(getRegExForLang('archive_title'), async (ctx) => {
             ctx.telegram.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
             this.archive(ctx);
