@@ -58,5 +58,10 @@
         "ua": "Клавіатура.",
         "ru": "Клавиатура.",
         "en": "Keyboard."
+    },
+    "help_text": {
+        "ua": "/keyboard - Показати клавiатуру\n/subscribe - Подписатися на новини\n/unsubscribe - Вiдписатися вiд новин\n/archive - Посилання на архiв\n/language - Обрати мову\n/help - Допомога",
+        "ru": "/keyboard - Показать клавиатуру\n/subscribe - Подписатся на новости\n/unsubscribe - Отписаться от новостей\n/archive - Ссылка на архив\n/language - Выбор языка\n/help - Помощь",
+        "en": "/keyboard - Show keyboard\n/subscribe - Subscribe to the news\n/unsubscribe - Unsubscribe from the news\n/archive - Get archive link\n/language - Select lenguage\n/help - This help"
     }
 }

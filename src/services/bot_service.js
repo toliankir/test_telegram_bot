@@ -70,9 +70,9 @@ class BotService {
             this.newsController.syncAllNewsLinks();
         });
 
-        // this.bot.hears(/.*/, (ctx) => {
-        //     this.dontKnow(ctx);
-        // })
+        this.bot.hears(/^(?!\/).*$/, (ctx) => {
+            this.dontKnow(ctx);
+        });
     }
 
     dontKnow(ctx) {
@@ -159,12 +159,7 @@ class BotService {
         });
 
         this.bot.command('help', (ctx) => {
-            ctx.reply(`/keyboard - Show keyboard
-/subscribe - Subscribe to the news
-/unsubscribe - Unsubscribe from the news
-/archive - Get archive link
-/language - Select lenguage
-/help - This help`);
+            ctx.reply(lang.help_text[ctx.session.langCode]);
         });
 
     }
