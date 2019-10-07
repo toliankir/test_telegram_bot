@@ -18,33 +18,33 @@ class BotService {
     }
 
     addMessaageHandlers() {
-        this.bot.hears(/^get\d+/, async (ctx) => {
-            const requestedNewsId = parseInt(ctx.match[0].match(/^get(\d+)/)[1]);
-            let publishNews = (await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode))[0];
-            if (!publishNews) {
-                ctx.reply('Can not find news in database.');
-                logger.log({
-                    level: 'verbose',
-                    message: `BotService: ${userForLogs(ctx.from)} request news #${requestedNewsId}, news don't found in database.`
-                });
-                return;
-            }
-            logger.log({
-                level: 'verbose',
-                message: `BotService: ${userForLogs(ctx.from)} request news #${requestedNewsId}.`
-            });
-            ctx.reply(addTelegrafDomainToNews(publishNews).path);
-        });
+        // this.bot.hears(/^get\d+/, async (ctx) => {
+        //     const requestedNewsId = parseInt(ctx.match[0].match(/^get(\d+)/)[1]);
+        //     let publishNews = (await this.dbService.getNewsByIdAndLang(requestedNewsId, ctx.session.langCode))[0];
+        //     if (!publishNews) {
+        //         ctx.reply('Can not find news in database.');
+        //         logger.log({
+        //             level: 'verbose',
+        //             message: `BotService: ${userForLogs(ctx.from)} request news #${requestedNewsId}, news don't found in database.`
+        //         });
+        //         return;
+        //     }
+        //     logger.log({
+        //         level: 'verbose',
+        //         message: `BotService: ${userForLogs(ctx.from)} request news #${requestedNewsId}.`
+        //     });
+        //     ctx.reply(addTelegrafDomainToNews(publishNews).path);
+        // });
 
-        this.bot.hears(/^sync\d+/, async (ctx) => {
-            const requestedNewsId = parseInt(ctx.match[0].match(/^sync(\d+)/)[1]);
-            this.newsController.syncNews(requestedNewsId, false);
-        });
+        // this.bot.hears(/^sync\d+/, async (ctx) => {
+        //     const requestedNewsId = parseInt(ctx.match[0].match(/^sync(\d+)/)[1]);
+        //     this.newsController.syncNews(requestedNewsId, false);
+        // });
 
-        this.bot.hears(/^addLinks\d+/, async (ctx) => {
-            const requestedNewsId = parseInt(ctx.match[0].match(/^addLinks(\d+)/)[1]);
-            this.newsController.addAllLinksToNews(requestedNewsId);
-        });
+        // this.bot.hears(/^addLinks\d+/, async (ctx) => {
+        //     const requestedNewsId = parseInt(ctx.match[0].match(/^addLinks(\d+)/)[1]);
+        //     this.newsController.addAllLinksToNews(requestedNewsId);
+        // });
 
         this.bot.hears(getRegExForLang('archive_title'), async (ctx) => {
             ctx.telegram.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
@@ -66,9 +66,9 @@ class BotService {
             this.unsubscribe(ctx);
         });
 
-        this.bot.hears('test', async (ctx) => {
-            this.newsController.syncAllNewsLinks();
-        });
+        // this.bot.hears('test', async (ctx) => {
+        //     this.newsController.syncAllNewsLinks();
+        // });
 
         this.bot.hears(/^(?!\/).*$/, (ctx) => {
             this.dontKnow(ctx);
@@ -77,6 +77,10 @@ class BotService {
 
     dontKnow(ctx) {
         ctx.reply(`Я не знаю что такое "${ctx.message.text}", я всего лишь бот. Чтоб у знать что я могу нажмите /help`);
+        logger.log({
+            level: 'verbose',
+            message: `BotService: user #${userForLogs(ctx.from)} unknown command ${ctx.message.text}.`
+        });
     }
 
     async subscribe(ctx) {
@@ -97,16 +101,16 @@ class BotService {
             last_msg: lastMsgId
         });
         logger.log({
-            level: 'info',
-            message: `BotService: user #${ctx.from.id} subscribe for a news.`
+            level: 'verbose',
+            message: `BotService: user #${userForLogs(ctx.from)} subscribe for a news.`
         });
     }
 
     async unsubscribe(ctx) {
         this.dbService.saveUser({ id: ctx.from.id, active: false });
         logger.log({
-            level: 'info',
-            message: `BotService: user #${ctx.from.id} unsubscribe for a news.`
+            level: 'verbose',
+            message: `BotService: user #${userForLogs(ctx.from)} unsubscribe for a news.`
         });
         ctx.reply(lang['unsubscribe_text'][ctx.session.langCode], this.getMainKeyboard(ctx.session.langCode, false));
     }
@@ -116,7 +120,7 @@ class BotService {
         ctx.reply(addTelegrafDomain(archivePath));
         logger.log({
             level: 'verbose',
-            message: `BotService: user #${ctx.from.id} request archive.`
+            message: `BotService: user #${ctx.from.id} ${ctx.from.username ? ctx.from.username : ''} request archive.`
         });
     }
 
@@ -160,6 +164,10 @@ class BotService {
 
         this.bot.command('help', (ctx) => {
             ctx.reply(lang.help_text[ctx.session.langCode]);
+            logger.log({
+                level: 'verbose',
+                message: `BotService: user #${ctx.from.id} ${ctx.from.username ? ctx.from.username : ''} request help.`
+            });    
         });
 
     }
@@ -264,7 +272,7 @@ class BotService {
 module.exports.BotService = BotService;
 
 function userForLogs(from) {
-    return `${from.username} #${from.id}`;
+    return `${from.id} ${from.username ? from.username : ''}`;
 }
 
 function getRegExForLang(field) {

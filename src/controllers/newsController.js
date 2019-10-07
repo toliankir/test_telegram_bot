@@ -11,6 +11,10 @@ class NewsController {
     }
 
     async syncAllNewsLinks() {
+        logger.log({
+            level: 'debug',
+            message: `NewsController: Start all news sync`
+        });
         await this.newsService.initNews();
         const sourceNewsCount = this.newsService.getNewsCount();
         for (let newsId = 1; newsId <= sourceNewsCount; newsId++) {
