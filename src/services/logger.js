@@ -1,6 +1,7 @@
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, printf } = format;
-
+const path = require('path');
+require('winston-daily-rotate-file');
 
 
 const logger = createLogger({
@@ -9,12 +10,23 @@ const logger = createLogger({
             level: 'debug',
             format: combine(
                 timestamp(),
-                format.printf(({ level, message, timestamp }) => {
+                printf(({ level, message, timestamp }) => {
                     return `${timestamp.replace('T', ' ').replace(/(\.\d+Z)$/, '')} ${level}: ${message}`;
                 }),
                 format.colorize({ all: true })
             )
-        })
+        }),
+        new transports.DailyRotateFile({
+            filename: path.join('logs','%DATE%.log'),
+            datePattern: 'YYYY-MM-DD-HH',
+            level: 'debug',
+            format: combine(
+                timestamp(),
+                printf(({ level, message, timestamp }) => {
+                    return `${timestamp.replace('T', ' ').replace(/(\.\d+Z)$/, '')} ${level}: ${message}`;
+                })
+            )
+        }),
     ]
 });
 
