@@ -17,9 +17,8 @@
     "querystring": "^0.2.0",
     "request": "^2.88.0",
     "telegraf": "^3.32.0",
-    "winston": "^3.2.1"
-  },
-  "devDependencies": {
+    "winston": "^3.2.1",
     "winston-daily-rotate-file": "^4.2.1"
-  }
+  },
+  "devDependencies": {}
 }
