@@ -27,7 +27,7 @@ class DBService {
             firebase.auth().signInWithEmailAndPassword(process.env.fb_auth_email, process.env.fb_auth_password).then(() => {
                 logger.log({
                     level: 'info',
-                    message: `Login to firebase as ${process.env.fb_auth_email}`
+                    message: `DBService: Login to firebase as ${process.env.fb_auth_email}`
                 });
                 resolve();
             }).catch(err => {
@@ -40,9 +40,17 @@ class DBService {
         return new Promise(async (resolve) => {
             const dbUserData = (await this.getUserById(user.id))[0];
             if (dbUserData) {
+                logger.log({
+                    level: 'debug',
+                    message: `DBService: Update user #${user.id}, ${user.username}.`
+                });
                 await this.firestore.collection('users').doc(dbUserData.uid).update(user);
                 return resolve();
             }
+            logger.log({
+                level: 'info',
+                message: `DBService: Add new user #${user.id}, ${user.username} to database.`
+            });
             await this.firestore.collection('users').add(user);
             return resolve();
         });
