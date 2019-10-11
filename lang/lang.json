@@ -30,9 +30,9 @@
         "en": "Next news"
     },
     "language_select_title": {
-        "ua": "Оберiть мову",
-        "ru": "Выберите язык",
-        "en": "Select language"
+        "ua": "мова",
+        "ru": "язык",
+        "en": "Language"
     },
     "archive_title": {
         "ua": "Архiв",
