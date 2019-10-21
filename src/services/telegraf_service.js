@@ -1,6 +1,7 @@
 require("dotenv").config();
 const request = require('request');
 const querystring = require('querystring');
+const { logger } = require('../services/logger');
 
 class TelegrafService {
     constructor(dbService, newsService) {
