@@ -16,9 +16,8 @@ serviceStart();
 async function serviceStart() {
     logger.log({
         level: 'info',
-        message: 'SHPP Telegram bot starts...'
+        message: `SHPP Telegram bot starts(${parseInt(process.env.dev_mode) === 1 ? 'Dev mode' : 'Pub mode'})...`
     });
-
     const dbService = new DBService();
     const newsService = new NewsService();
 
