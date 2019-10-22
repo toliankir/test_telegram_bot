@@ -1,6 +1,7 @@
 require("dotenv").config();
 const request = require('request');
 const querystring = require('querystring');
+const { logger } = require('../services/logger');
 
 class TelegrafService {
     constructor(dbService, newsService) {
@@ -10,6 +11,10 @@ class TelegrafService {
     }
 
     async getPage(path) {
+        logger.log({
+            level: 'debug',
+            message: `TelegrafService: Start page request: path: ${path}`
+        });
         return new Promise((resolve, reject) => {
             request({ url: encodeURI(`https://api.telegra.ph/getPage/${path}`), qs: { return_content: true } }, (err, res, body) => {
                 if (err) {
@@ -24,6 +29,10 @@ class TelegrafService {
     }
 
     async createPage(title, content) {
+        logger.log({
+            level: 'debug',
+            message: `TelegrafService: Start create page: title: ${title}`
+        });
         return new Promise((resolve, reject) => {
             const form = {
                 access_token: this.accountToken,
@@ -53,12 +62,20 @@ class TelegrafService {
                 if (!jsonData.ok) {
                     return reject(`Telegraf response error: ${jsonData.error}`);
                 }
+                logger.log({
+                    level: 'debug',
+                    message: `TelegrafService: Page created: path: ${jsonData.result.path}`
+                });
                 resolve(jsonData.result.path);
             });
         });
     }
 
     async updagePage(path, title, content) {
+        logger.log({
+            level: 'debug',
+            message: `TelegrafService: Start update page: path ${path}, title: ${title}`
+        });
         return new Promise((resolve, reject) => {
             const form = {
                 access_token: this.accountToken,
