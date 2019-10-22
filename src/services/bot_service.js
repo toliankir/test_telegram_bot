@@ -163,10 +163,11 @@ class BotService {
             ctx.scene.enter('startScene');
         });
 
-        // this.bot.command('test', async (ctx) => {
-        //     await this.newsController.syncNewNews();
-        // });
         if (parseInt(process.env.dev_mode) === 1) {
+
+            this.bot.command('test', async (ctx) => {
+                await this.newsController.syncNews(47);
+            });
             this.bot.command('updateLinks', async (ctx) => {
                 await this.newsService.initNews();
                 const lastNewsInSource = this.newsService.getNewsCount();
@@ -192,7 +193,7 @@ class BotService {
             logger.log({
                 level: 'verbose',
                 message: `BotService: user #${ctx.from.id} ${ctx.from.username ? ctx.from.username : ''} request help.`
-            });    
+            });
         });
 
     }

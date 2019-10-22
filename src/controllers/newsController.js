@@ -37,7 +37,9 @@ class NewsController {
                 // const media = [...getVideosHtmlStrArr([sourceNews.video]), ...getImagesHtmlStrArr(sourceNews.images)]
                 const media = getImagesHtmlStrArr(sourceNews.images);
                 sourceOnLang.text = addMediaToNewsContent(sourceOnLang.text, media);
+                // console.log(newsDbOnLang);
                 if (newsDbOnLang) {
+                    this.dbService.updateNewsTitle(newsDbOnLang.uid, sourceOnLang.title);
                     await this.telegrafService.updagePage(newsDbOnLang.path, sourceOnLang.title, htmlStrToNode(sourceOnLang.text));
                     logger.log({
                         level: 'verbose',
