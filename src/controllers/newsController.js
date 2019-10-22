@@ -29,7 +29,7 @@ class NewsController {
             for (const language of languageArr) {
                 const newsDbOnLang = newsFromDb.find((el) => el.lang === language);
                 const sourceOnLang = getNewsOnLanguage(sourceNews, language);
-                sourceOnLang.title = getNewsTitle(sourceOnLang);
+                sourceOnLang.title = sourceOnLang.title;
                 // const media = [...getVideosHtmlStrArr([sourceNews.video]), ...getImagesHtmlStrArr(sourceNews.images)]
                 const media = getImagesHtmlStrArr(sourceNews.images);
                 sourceOnLang.text = addMediaToNewsContent(sourceOnLang.text, media);
@@ -59,6 +59,7 @@ class NewsController {
         const lastNewsInDb = await this.dbService.getLastNewsId();
         await this.newsService.initNews();
         const lastNewsInSource = this.newsService.getNewsCount();
+        console.log('test', lastNewsInDb, lastNewsInSource);
         if (lastNewsInSource === lastNewsInDb) {
             logger.log({
                 level: 'info',
@@ -160,8 +161,21 @@ class NewsController {
 
             for (const langKey in news) {
                 news[langKey] += '</ul>';
-                const pagePath = await this.telegrafService.createPage(lang.arhive_title[langKey], htmlStrToNode(news[langKey]));
-                await this.dbService.setConfig(`archive_${langKey}`, pagePath);
+                const pagePathFromDb = await this.dbService.getConfig(`archive_${langKey}`);
+                if (!pagePathFromDb) {
+                    const pagePath = await this.telegrafService.createPage(lang.arhive_title[langKey], htmlStrToNode(news[langKey]));
+                    logger.log({
+                        level: 'info',
+                        message: `NewsController: Create new archive ${pagePath}.`
+                    });
+                    await this.dbService.setConfig(`archive_${langKey}`, pagePath);
+                    continue;
+                }
+                logger.log({
+                    level: 'info',
+                    message: `NewsController: Archive exist, update link ${pagePathFromDb}.`
+                });
+                await this.telegrafService.updagePage(pagePathFromDb, lang.arhive_title[langKey], htmlStrToNode(news[langKey]));
             }
             resolve();
         });
@@ -229,7 +243,7 @@ function addMediaToNewsContent(content, mediaArr) {
 }
 
 function getNewsTitle(newsSource) {
-    return `${newsSource.title} (${newsSource.date})`;
+    return `${newsSource.title}`;
 }
 
 function haveEndTags(news, tagsArr) {

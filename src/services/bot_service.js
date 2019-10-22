@@ -6,6 +6,7 @@ const Stage = require('telegraf/stage');
 const WizardScene = require('telegraf/scenes/wizard');
 const Markup = require('telegraf/markup');
 const { logger } = require('./logger');
+
 class BotService {
 
     constructor(dbService, newsService, newsController) {
@@ -157,6 +158,30 @@ class BotService {
         this.bot.command('language', async (ctx) => {
             ctx.scene.enter('startScene');
         });
+
+        // this.bot.command('test', async (ctx) => {
+        //     await this.newsController.syncNewNews();
+        // });
+        if (parseInt(process.env.dev_mode) === 1) {
+            this.bot.command('updateLinks', async (ctx) => {
+                await this.newsService.initNews();
+                const lastNewsInSource = this.newsService.getNewsCount();
+                for (let newsId = 1; newsId <= lastNewsInSource; newsId++) {
+                    await this.newsController.addAllLinksToNews(newsId);
+                }
+            });
+            this.bot.command('updateNews', async (ctx) => {
+                await this.newsService.initNews();
+                const lastNewsInSource = this.newsService.getNewsCount();
+                for (let newsId = 1; newsId <= lastNewsInSource; newsId++) {
+                    await this.newsController.syncNews(newsId, true);
+                }
+            });
+
+            this.bot.command('updateArchive', async (ctx) => {
+                await this.newsController.updateArchive();
+            });
+        }
 
         this.bot.command('help', (ctx) => {
             ctx.reply(lang.help_text[ctx.session.langCode]);

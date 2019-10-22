@@ -88,9 +88,11 @@ class DBService {
     async getLastNewsId() {
         return new Promise(async (resolve, reject) => {
             this.firestore.collection('news').orderBy('id', 'desc').limit(1).get().then(data => {
+           
                 data.forEach(async (el) => {
                     return resolve(el.data().id);
-                })
+                });
+                return resolve(0);
             })
                 .catch(err => reject(err));
         });
